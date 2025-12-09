@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grabbit/util/Shop/gradient_icon.dart';
+import 'package:grabbit/util/chat_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -108,60 +109,70 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          Color(0xffD1D5DC),
-                          Colors.transparent,
-                        ],
-                        stops: [0.0, 0.5, 1.0],
+            Expanded(
+              child: ListView(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Color(0xffD1D5DC),
+                                Colors.transparent,
+                              ],
+                              stops: [0.0, 0.5, 1.0],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: Color(0xffE5E7EB),
-                    ),
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: Text(
-                    "Today",
-                    style: TextStyle(
-                      color: Color(0xff6A7282),
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          Color(0xffD1D5DC),
-                          Colors.transparent,
-                        ],
-                        stops: [0.0, 0.5, 1.0],
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                            color: Color(0xffE5E7EB),
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        child: Text(
+                          "Today",
+                          style: TextStyle(
+                            color: Color(0xff6A7282),
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
-                    ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Color(0xffD1D5DC),
+                                Colors.transparent,
+                              ],
+                              stops: [0.0, 0.5, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            )
+                  SizedBox(
+                    height: 20,
+                  ),
+                  ChatBubble(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
