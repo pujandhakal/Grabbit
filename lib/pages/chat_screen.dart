@@ -169,7 +169,21 @@ class _ChatScreenState extends State<ChatScreen> {
                   SizedBox(
                     height: 20,
                   ),
-                  ChatBubble(),
+                  ChatBubble(
+                    isSent: true,
+                  ),
+                  ChatBubble(
+                    isSent: false,
+                  ),
+                  ChatBubble(
+                    isSent: true,
+                  ),
+                  ChatBubble(
+                    isSent: false,
+                  ),
+                  ChatBubble(
+                    isSent: true,
+                  ),
                 ],
               ),
             ),

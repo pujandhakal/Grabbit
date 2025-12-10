@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ChatBubble extends StatefulWidget {
-  const ChatBubble({super.key});
+  final bool isSent;
+  const ChatBubble({super.key, required this.isSent});
 
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
@@ -10,51 +11,91 @@ class ChatBubble extends StatefulWidget {
 class _ChatBubbleState extends State<ChatBubble> {
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+    if (widget.isSent == true) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          margin: EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+                bottomRight: Radius.circular(4),
+                bottomLeft: Radius.circular(20),
+              ),
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xff00BBA7),
+                  Color(0xff009689),
+                  Color(0xff0092B8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color.fromARGB(130, 150, 247, 228),
+                  blurRadius: 15,
+                  spreadRadius: -3,
+                  offset: Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: Color.fromARGB(130, 150, 247, 228),
+                  blurRadius: 6,
+                  spreadRadius: -4,
+                  offset: Offset(0, 4),
+                ),
+              ]),
+          child: Text(
+            "Hi! I saw your response to my req for a red hoodie.",
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
         ),
-        margin: EdgeInsets.only(bottom: 22),
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
+      );
+    } else {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: EdgeInsets.all(16),
+          margin: EdgeInsets.only(bottom: 12),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
-              bottomRight: Radius.circular(4),
-              bottomLeft: Radius.circular(20),
-            ),
-            gradient: LinearGradient(
-              colors: [
-                Color(0xff00BBA7),
-                Color(0xff009689),
-                Color(0xff0092B8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              bottomRight: Radius.circular(20),
+              bottomLeft: Radius.circular(4),
             ),
             boxShadow: [
               BoxShadow(
-                color: Color.fromARGB(130, 150, 247, 228),
-                blurRadius: 15,
-                spreadRadius: -3,
-                offset: Offset(0, 10),
+                color: Color.fromARGB(30, 0, 0, 0),
+                offset: Offset(0, 4),
+                spreadRadius: -1,
+                blurRadius: 6,
               ),
               BoxShadow(
-                color: Color.fromARGB(130, 150, 247, 228),
-                blurRadius: 6,
-                spreadRadius: -4,
-                offset: Offset(0, 4),
+                color: Color.fromARGB(30, 0, 0, 0),
+                offset: Offset(0, 2),
+                spreadRadius: -2,
+                blurRadius: 4,
               ),
-            ]),
-        child: Text(
-          "Hi! I saw your response to my req for a red hoodie.",
-          style: TextStyle(
-            color: Colors.white,
+            ],
+          ),
+          child: Text(
+            "Hello! Yes, we have the red hoodie in size L available. It's premium cotton material and brand new.",
+            style: TextStyle(),
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 }
