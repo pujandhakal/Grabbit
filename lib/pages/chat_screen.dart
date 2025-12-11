@@ -105,6 +105,24 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.only(bottom: 24, left: 16, right: 16, top: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              child: Icon(Icons.attach_file_outlined),
+            ),
+            Expanded(child: TextField()),
+            Container(
+              child: Icon(Icons.attach_file_outlined),
+            ),
+          ],
+        ),
+      ),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
