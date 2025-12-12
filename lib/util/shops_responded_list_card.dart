@@ -1,9 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:grabbit/pages/chat_screen.dart';
 import 'package:grabbit/pages/user/Store_details_screen.dart';
 import 'package:grabbit/util/Shop/gradient_icon.dart';
 
 class ShopsRespondedListCard extends StatefulWidget {
-  const ShopsRespondedListCard({super.key});
+  final String shopName;
+  final String distance;
+  final String postedTime;
+  final double rating;
+  final int noOfReviews;
+  final String description;
+  final bool isVerified;
+  final String offeredPrice;
+  const ShopsRespondedListCard({
+    super.key,
+    required this.shopName,
+    required this.distance,
+    required this.postedTime,
+    required this.rating,
+    required this.noOfReviews,
+    required this.description,
+    required this.offeredPrice,
+    this.isVerified = true,
+  });
 
   @override
   State<ShopsRespondedListCard> createState() => _ShopsRespondedListCardState();
@@ -14,6 +33,7 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(20),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -46,24 +66,26 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
                   Row(
                     children: [
                       Text(
-                        "Fashion Hub Kathmandu",
+                        widget.shopName,
                         style: TextStyle(fontSize: 16),
                       ),
                       SizedBox(
                         width: 4,
                       ),
-                      Container(
-                        padding: EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Color(0xff155DFC),
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 12,
-                        ),
-                      ),
+                      widget.isVerified
+                          ? Container(
+                              padding: EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Color(0xff155DFC),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                            )
+                          : SizedBox.shrink(),
                     ],
                   ),
                   SizedBox(
@@ -91,7 +113,7 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
                               width: 4,
                             ),
                             Text(
-                              "450m away",
+                              "${widget.distance} away",
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Color(0xff00786F),
@@ -123,7 +145,7 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
                               width: 4,
                             ),
                             Text(
-                              "5 mins ago",
+                              "${widget.postedTime} ago",
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Color(0xff155DFC),
@@ -163,7 +185,7 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
                               width: 4,
                             ),
                             Text(
-                              "4.8",
+                              widget.rating.toString(),
                               style: TextStyle(
                                 fontSize: 12,
                               ),
@@ -177,7 +199,7 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
 
                       //reviews
                       Text(
-                        "(234 reviews)",
+                        "(${widget.noOfReviews} reviews)",
                         style: TextStyle(
                           fontSize: 12,
                           color: Color(0xff6A7282),
@@ -214,7 +236,7 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
             child: Column(
               children: [
                 Text(
-                  "We have red hoodie in stock! Available in size L, premium cotton material.",
+                  widget.description,
                 ),
                 SizedBox(
                   height: 12,
@@ -239,7 +261,7 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
                       width: 8,
                     ),
                     Text(
-                      "Rs. 2,500",
+                      "Rs. ${widget.offeredPrice}",
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xff008236),
@@ -298,18 +320,28 @@ class _ShopsRespondedListCardState extends State<ShopsRespondedListCard> {
               SizedBox(
                 width: 12,
               ),
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Color(0xff46ECD5),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Color(0xff46ECD5),
+                    ),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  size: 16,
-                  color: Color(0xff009689),
+                  child: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 16,
+                    color: Color(0xff009689),
+                  ),
                 ),
               )
             ],

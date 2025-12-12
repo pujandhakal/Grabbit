@@ -62,28 +62,62 @@ class _ShopsRespondedPageState extends State<ShopsRespondedPage> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Column(
-            children: [
-              //pre-request card
-              AlreadyRequestedProductCard(),
-              SizedBox(
-                height: 16,
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Column(
+          children: [
+            //pre-request card
+            AlreadyRequestedProductCard(),
+            SizedBox(
+              height: 16,
+            ),
+
+            //two filter
+            ResponseFilterCard(),
+
+            SizedBox(
+              height: 16,
+            ),
+
+            //list of shops responded
+            Expanded(
+              child: ListView(
+                children: [
+                  ShopsRespondedListCard(
+                    shopName: 'Fashion Hub Kathmandu',
+                    distance: '450m',
+                    postedTime: '5 mins',
+                    rating: 4.8,
+                    noOfReviews: 234,
+                    description:
+                        'We have red hoodie in stock! Available in size L, premium cotton material.',
+                    offeredPrice: "2,500",
+                  ),
+                  ShopsRespondedListCard(
+                    isVerified: false,
+                    shopName: 'Style Corner',
+                    distance: '800m',
+                    postedTime: '12 mins',
+                    rating: 4.3,
+                    noOfReviews: 89,
+                    description:
+                        'Available in red, size L. Good quality, slightly used condition.',
+                    offeredPrice: "1,800",
+                  ),
+                  ShopsRespondedListCard(
+                    shopName: 'Clothing Paradise',
+                    distance: '1.2km',
+                    postedTime: '25 mins',
+                    rating: 4.9,
+                    noOfReviews: 456,
+                    description:
+                        'Brand new red hoodie, size L available. Can deliver within 30 mins!',
+                    offeredPrice: "2,800",
+                  ),
+                ],
               ),
-
-              //two filter
-              ResponseFilterCard(),
-
-              SizedBox(
-                height: 16,
-              ),
-
-              //list of shops responded
-              ShopsRespondedListCard(),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
