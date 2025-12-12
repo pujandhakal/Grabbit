@@ -114,11 +114,72 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              child: Icon(Icons.attach_file_outlined),
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                  color: Color(0xffF9FAFB),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.25),
+                      offset: Offset(0, 1),
+                      blurRadius: 3,
+                    ),
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.25),
+                      offset: Offset(0, 1),
+                      blurRadius: 2,
+                      spreadRadius: -1,
+                    ),
+                  ]),
+              child: Icon(
+                Icons.attach_file_outlined,
+                color: Color(0xff4A5565),
+                size: 20,
+              ),
             ),
-            Expanded(child: TextField()),
+            Expanded(
+              child: TextField(
+                decoration: InputDecoration(
+                  suffixIcon: Icon(
+                    Icons.emoji_emotions_outlined,
+                    color: Color(0xff6A7282),
+                  ),
+                  hint: Text(
+                    "Type a message...",
+                    style: TextStyle(
+                      color: Color(0xff99A1AF),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color(0xffF9FAFB),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(
+                      color: Color(0xffE5E7EB),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(
+                      color: Color(0xff009F90),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Container(
-              child: Icon(Icons.attach_file_outlined),
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.only(left: 12),
+              decoration: BoxDecoration(
+                color: Color(0xffD1D5DC),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                Icons.send_outlined,
+                color: Color(0xff99A1AF),
+                size: 20,
+              ),
             ),
           ],
         ),
@@ -189,18 +250,34 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   ChatBubble(
                     isSent: true,
+                    message:
+                        "Hi! I saw your response to my request for a red hoodie.",
                   ),
                   ChatBubble(
                     isSent: false,
+                    message:
+                        "Hello! Yes, we have the red hoodie in size L available. It's premium cotton material and brand new.",
                   ),
                   ChatBubble(
                     isSent: true,
+                    message: "Great! Can you send me a picture?",
                   ),
                   ChatBubble(
                     isSent: false,
+                    message: "Here it is! This is our premium quality hoodie.",
                   ),
                   ChatBubble(
                     isSent: true,
+                    message: "Looks perfect! What's your best price?",
+                  ),
+                  ChatBubble(
+                    isSent: false,
+                    message:
+                        "I can offer you a special price. Regular price Rs. 2,500 - Special discount for you!",
+                  ),
+                  ChatBubble(
+                    isSent: true,
+                    message: "That's a great deal! When can I pick it up?",
                   ),
                 ],
               ),

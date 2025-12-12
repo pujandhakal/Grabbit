@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 
 class ChatBubble extends StatefulWidget {
   final bool isSent;
-  const ChatBubble({super.key, required this.isSent});
+  final String message;
+  const ChatBubble({
+    super.key,
+    required this.isSent,
+    required this.message,
+  });
 
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
@@ -51,7 +56,7 @@ class _ChatBubbleState extends State<ChatBubble> {
                 ),
               ]),
           child: Text(
-            "Hi! I saw your response to my req for a red hoodie.",
+            widget.message,
             style: TextStyle(
               color: Colors.white,
             ),
@@ -91,7 +96,7 @@ class _ChatBubbleState extends State<ChatBubble> {
             ],
           ),
           child: Text(
-            "Hello! Yes, we have the red hoodie in size L available. It's premium cotton material and brand new.",
+            widget.message,
             style: TextStyle(),
           ),
         ),
