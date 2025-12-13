@@ -90,18 +90,34 @@ class _ChatListScreenState extends State<ChatListScreen> {
         child: ListView(
           children: [
             GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(),
-                    ),
-                  );
-                },
-                child: ChatTile()),
-            ChatTile(),
-            ChatTile(),
-            ChatTile(),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(),
+                  ),
+                );
+              },
+              child: ChatTile(
+                shopName: 'Tech Haven',
+                message: 'We have your requested laptop in stock!',
+                timeStamp: '10:45 AM',
+                imageLink: 'https://picsum.photos/100',
+              ),
+            ),
+            ChatTile(
+              shopName: "StyleHub Boutique",
+              message: "Thank you for your purchase! 😊",
+              timeStamp: "Yesterday",
+              imageLink: 'https://picsum.photos/101',
+              isUnread: false,
+            ),
+            ChatTile(
+              shopName: "Book Nook",
+              message: "We found the book you were looking for",
+              timeStamp: "Yesterday",
+              imageLink: 'https://picsum.photos/101',
+            )
           ],
         ),
       ),
