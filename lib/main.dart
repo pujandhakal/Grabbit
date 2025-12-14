@@ -4,9 +4,10 @@ import 'package:grabbit/pages/Shop/shop_dashboard_page.dart';
 import 'package:grabbit/pages/login_page.dart';
 import 'package:grabbit/pages/user/home_page.dart';
 import 'package:grabbit/pages/intro_page.dart';
+import 'package:grabbit/pages/user/user_main_screen.dart';
 
-void main() { 
-  runApp(const MyApp()); 
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
