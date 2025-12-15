@@ -84,188 +84,188 @@ class _HomePageState extends State<HomePage> {
 
       //Bottom navigation bar
 
-      bottomNavigationBar: Stack(
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(28),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.home_outlined,
-                          color: Color(0xff00BBA7),
-                          size: 24,
-                        ),
-                        SizedBox(
-                          height: 2,
-                        ),
-                        Text(
-                          "Home",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xff00BBA7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MyRequestsScreen(),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(28),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SvgPicture.asset(
-                          "assets/images/productDesc_icon.svg",
-                          colorFilter: ColorFilter.mode(
-                              Color(0xff99A1AF), BlendMode.srcIn),
-                        ),
-                        SizedBox(
-                          height: 2,
-                        ),
-                        Text(
-                          "Requests",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xff99A1AF),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Spacer(),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatListScreen(),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(28),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          color: Color(0xff99A1AF),
-                          size: 24,
-                        ),
-                        SizedBox(
-                          height: 2,
-                        ),
-                        Text(
-                          "Chats",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xff99A1AF),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => UserProfilePage()));
-                  },
-                  borderRadius: BorderRadius.circular(28),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          color: Color(0xff99A1AF),
-                        ),
-                        SizedBox(
-                          height: 2,
-                        ),
-                        Text(
-                          "Profile",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xff99A1AF),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+      // bottomNavigationBar: Stack(
+      //   children: [
+      //     Container(
+      //       padding: EdgeInsets.symmetric(vertical: 14),
+      //       child: Row(
+      //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      //         children: [
+      //           InkWell(
+      //             onTap: () {},
+      //             borderRadius: BorderRadius.circular(28),
+      //             child: Container(
+      //               padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
+      //               child: Column(
+      //                 mainAxisSize: MainAxisSize.min,
+      //                 children: [
+      //                   Icon(
+      //                     Icons.home_outlined,
+      //                     color: Color(0xff00BBA7),
+      //                     size: 24,
+      //                   ),
+      //                   SizedBox(
+      //                     height: 2,
+      //                   ),
+      //                   Text(
+      //                     "Home",
+      //                     style: TextStyle(
+      //                       fontSize: 12,
+      //                       color: Color(0xff00BBA7),
+      //                     ),
+      //                   ),
+      //                 ],
+      //               ),
+      //             ),
+      //           ),
+      //           InkWell(
+      //             onTap: () {
+      //               Navigator.push(
+      //                 context,
+      //                 MaterialPageRoute(
+      //                   builder: (context) => MyRequestsScreen(),
+      //                 ),
+      //               );
+      //             },
+      //             borderRadius: BorderRadius.circular(28),
+      //             child: Container(
+      //               padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
+      //               child: Column(
+      //                 mainAxisSize: MainAxisSize.min,
+      //                 children: [
+      //                   SvgPicture.asset(
+      //                     "assets/images/productDesc_icon.svg",
+      //                     colorFilter: ColorFilter.mode(
+      //                         Color(0xff99A1AF), BlendMode.srcIn),
+      //                   ),
+      //                   SizedBox(
+      //                     height: 2,
+      //                   ),
+      //                   Text(
+      //                     "Requests",
+      //                     style: TextStyle(
+      //                       fontSize: 12,
+      //                       color: Color(0xff99A1AF),
+      //                     ),
+      //                   ),
+      //                 ],
+      //               ),
+      //             ),
+      //           ),
+      //           Spacer(),
+      //           InkWell(
+      //             onTap: () {
+      //               Navigator.push(
+      //                 context,
+      //                 MaterialPageRoute(
+      //                   builder: (context) => ChatListScreen(),
+      //                 ),
+      //               );
+      //             },
+      //             borderRadius: BorderRadius.circular(28),
+      //             child: Container(
+      //               padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
+      //               child: Column(
+      //                 mainAxisSize: MainAxisSize.min,
+      //                 children: [
+      //                   Icon(
+      //                     Icons.chat_bubble_outline,
+      //                     color: Color(0xff99A1AF),
+      //                     size: 24,
+      //                   ),
+      //                   SizedBox(
+      //                     height: 2,
+      //                   ),
+      //                   Text(
+      //                     "Chats",
+      //                     style: TextStyle(
+      //                       fontSize: 12,
+      //                       color: Color(0xff99A1AF),
+      //                     ),
+      //                   ),
+      //                 ],
+      //               ),
+      //             ),
+      //           ),
+      //           InkWell(
+      //             onTap: () {
+      //               Navigator.push(
+      //                   context,
+      //                   MaterialPageRoute(
+      //                       builder: (context) => UserProfilePage()));
+      //             },
+      //             borderRadius: BorderRadius.circular(28),
+      //             child: Container(
+      //               padding: EdgeInsets.symmetric(horizontal: 22, vertical: 4),
+      //               child: Column(
+      //                 mainAxisSize: MainAxisSize.min,
+      //                 children: [
+      //                   Icon(
+      //                     Icons.person_outline,
+      //                     color: Color(0xff99A1AF),
+      //                   ),
+      //                   SizedBox(
+      //                     height: 2,
+      //                   ),
+      //                   Text(
+      //                     "Profile",
+      //                     style: TextStyle(
+      //                       fontSize: 12,
+      //                       color: Color(0xff99A1AF),
+      //                     ),
+      //                   ),
+      //                 ],
+      //               ),
+      //             ),
+      //           ),
+      //         ],
+      //       ),
+      //     ),
 
-          //Add new request button
+      //     //Add new request button
 
-          Positioned(
-            top: 0,
-            left: MediaQuery.of(context).size.width / 2 - 20,
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.5),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: Offset(0, 3))
-                ],
-                gradient: LinearGradient(colors: [
-                  Color.fromARGB(255, 8, 189, 171),
-                  Color.fromARGB(255, 1, 110, 100),
-                  // Color(0xff009689),
-                ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(28),
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => PostRequestPage()));
-                  },
-                  child: Icon(
-                    Icons.add,
-                    size: 34,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      //     Positioned(
+      //       top: 0,
+      //       left: MediaQuery.of(context).size.width / 2 - 20,
+      //       child: Container(
+      //         width: 56,
+      //         height: 56,
+      //         decoration: BoxDecoration(
+      //           shape: BoxShape.circle,
+      //           boxShadow: [
+      //             BoxShadow(
+      //                 color: Colors.grey.withValues(alpha: 0.5),
+      //                 spreadRadius: 2,
+      //                 blurRadius: 5,
+      //                 offset: Offset(0, 3))
+      //           ],
+      //           gradient: LinearGradient(colors: [
+      //             Color.fromARGB(255, 8, 189, 171),
+      //             Color.fromARGB(255, 1, 110, 100),
+      //             // Color(0xff009689),
+      //           ], begin: Alignment.topLeft, end: Alignment.bottomRight),
+      //         ),
+      //         child: Material(
+      //           color: Colors.transparent,
+      //           child: InkWell(
+      //             borderRadius: BorderRadius.circular(28),
+      //             onTap: () {
+      //               Navigator.push(
+      //                   context,
+      //                   MaterialPageRoute(
+      //                       builder: (context) => PostRequestPage()));
+      //             },
+      //             child: Icon(
+      //               Icons.add,
+      //               size: 34,
+      //               color: Colors.white,
+      //             ),
+      //           ),
+      //         ),
+      //       ),
+      //     ),
+      //   ],
+      // ),
 
       // bottomNavigationBar: BottomNavigationBar(
       //     type: BottomNavigationBarType.fixed,

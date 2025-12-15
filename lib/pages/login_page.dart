@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:grabbit/pages/user/home_page.dart';
+import 'package:grabbit/pages/user/user_main_screen.dart';
 import 'package:grabbit/pages/user/user_signup_page.dart';
 import 'package:grabbit/util/Shop/gradient_icon.dart';
 
@@ -20,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   @override
-  void dispose(){
+  void dispose() {
     super.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -113,9 +114,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           TextFormField(
                             controller: _emailController,
-                            validator: (val){
-
-                            },
+                            validator: (val) {},
                             decoration: InputDecoration(
                               hintText: "Enter your email or phone",
                               hintStyle: TextStyle(
@@ -150,9 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           TextFormField(
                             controller: _passwordController,
-                            validator: (val){
-
-                            },
+                            validator: (val) {},
                             obscureText: isVisible ? true : false,
                             decoration: InputDecoration(
                               suffixIcon: IconButton(
@@ -220,9 +217,11 @@ class _LoginPageState extends State<LoginPage> {
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => HomePage()));
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UserMainScreen(),
+                                ),
+                              );
                             },
                             child: Container(
                               alignment: AlignmentGeometry.center,
