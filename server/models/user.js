@@ -26,10 +26,10 @@ const userSchema = mongoose.Schema({
     password: {
         required: true,
         type: String,
+        
     },
 
     phone: {
-        required: true,
         type: Number,
         trim: true,
     },
@@ -39,4 +39,8 @@ const userSchema = mongoose.Schema({
         default: 'user',
     },
     
-})
+});
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = User;

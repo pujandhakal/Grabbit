@@ -14,6 +14,7 @@ const app = express();
 const DB = "mongodb+srv://pujan:grabbit%23333@cluster0.jaokfcd.mongodb.net/?appName=Cluster0"
 
 //middleware
+app.use(express.json());
 app.use(authRouter);
 
 //Connections
