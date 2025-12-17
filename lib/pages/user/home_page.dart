@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:grabbit/pages/chat_list_screen.dart';
 import 'package:grabbit/pages/user/my_requests_screen.dart';
 import 'package:grabbit/pages/user/post_request_page.dart';
+import 'package:grabbit/pages/user/trending_deals_screen.dart';
 import 'package:grabbit/pages/user/user_profile_page.dart';
 import 'package:grabbit/util/live_request_card.dart';
 import 'package:grabbit/util/quick_action_card.dart';
@@ -414,7 +415,12 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => TrendingDealsScreen()));
+                      },
                       child: Row(
                         children: [
                           Text(

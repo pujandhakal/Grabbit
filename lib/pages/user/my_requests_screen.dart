@@ -31,22 +31,6 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xff009689),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PostRequestPage(),
-            ),
-          );
-        },
-        child: Icon(
-          Icons.add_rounded,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
       body: Padding(
         padding: EdgeInsetsGeometry.all(16),
         child: ListView(
