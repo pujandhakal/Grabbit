@@ -26,6 +26,7 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
               ),
             ),
             title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
@@ -42,6 +43,16 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
                     ),
                   ],
                 ),
+                SizedBox(
+                  height: 8,
+                ),
+                Text(
+                  "Unlock exclusive discounts together",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                )
               ],
             ),
             backgroundColor: Colors.transparent,
@@ -65,6 +76,50 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
               ),
             ),
           ),
+          Positioned(
+            top: kToolbarHeight + 50,
+            left: 40,
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white30),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.show_chart_outlined,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text(
+                        "8 Live Deals",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          )
         ],
       ),
     );
