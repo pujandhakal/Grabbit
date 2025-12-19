@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:grabbit/util/filter_card_groupBuy.dart';
 
 class TrendingDealsScreen extends StatefulWidget {
   const TrendingDealsScreen({super.key});
@@ -116,10 +117,52 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
                       ),
                     ],
                   ),
-                )
+                ),
+                SizedBox(width: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white30),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.people_outlined,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text(
+                        "Save Together",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          )
+          ),
+          Positioned(
+            top: kToolbarHeight + 120,
+            left: 20,
+            child: FilterCardGroupbuy(),
+          ),
         ],
       ),
     );
