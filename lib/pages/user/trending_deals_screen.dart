@@ -88,6 +88,20 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
                     horizontal: 16,
                   ),
                   decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color.fromARGB(25, 0, 0, 0),
+                        offset: Offset(0, 10),
+                        blurRadius: 15,
+                        spreadRadius: -3,
+                      ),
+                      BoxShadow(
+                        color: Color.fromARGB(25, 0, 0, 0),
+                        offset: Offset(0, 4),
+                        blurRadius: 6,
+                        spreadRadius: -4,
+                      ),
+                    ],
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white30),
@@ -125,6 +139,20 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
                     horizontal: 16,
                   ),
                   decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color.fromARGB(25, 0, 0, 0),
+                        offset: Offset(0, 10),
+                        blurRadius: 15,
+                        spreadRadius: -3,
+                      ),
+                      BoxShadow(
+                        color: Color.fromARGB(25, 0, 0, 0),
+                        offset: Offset(0, 4),
+                        blurRadius: 6,
+                        spreadRadius: -4,
+                      ),
+                    ],
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white30),
@@ -159,7 +187,7 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
             ),
           ),
           Positioned(
-            top: kToolbarHeight + 120,
+            top: kToolbarHeight + 110,
             left: 20,
             child: FilterCardGroupbuy(),
           ),
