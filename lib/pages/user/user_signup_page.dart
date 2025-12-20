@@ -12,6 +12,21 @@ class UserSignupPage extends StatefulWidget {
 class _UserSignupPageState extends State<UserSignupPage> {
   bool isVisible = true;
   bool _isChecked = false;
+
+  final _signupFormKey = GlobalKey<FormState>();
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    super.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,302 +99,316 @@ class _UserSignupPageState extends State<UserSignupPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Full Name",
-                      style: TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 8,
-                    ),
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: "e.g. Pujan Dhakal",
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xffE5E7EB),
+                    Form(
+                      key: _signupFormKey,
+                      child: Column(
+                        children: [
+                          Text(
+                            "Full Name",
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xff01A5AD),
+                          SizedBox(
+                            height: 8,
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    Text(
-                      "Email Address",
-                      style: TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 8,
-                    ),
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: "e.g. dhakalpujan72@gmail.com",
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xffE5E7EB),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xff01A5AD),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    Text(
-                      "Phone Number",
-                      style: TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 8,
-                    ),
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: "e.g. 9769786820",
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xffE5E7EB),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xff01A5AD),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    Text(
-                      "Password",
-                      style: TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 8,
-                    ),
-                    TextField(
-                      obscureText: isVisible ? true : false,
-                      decoration: InputDecoration(
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              isVisible = !isVisible;
-                            });
-                          },
-                          icon: isVisible
-                              ? Icon(
-                                  Icons.visibility_off_outlined,
-                                  color: Color(0xff99A1AF),
-                                  size: 20,
-                                )
-                              : Icon(
-                                  Icons.visibility_outlined,
-                                  color: Color(0xff99A1AF),
-                                  size: 20,
-                                ),
-                        ),
-                        hintText: "Enter your password",
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xffE5E7EB),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xff01A5AD),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    Text(
-                      "Confirm Password",
-                      style: TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 8,
-                    ),
-                    TextField(
-                      obscureText: isVisible ? true : false,
-                      decoration: InputDecoration(
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              isVisible = !isVisible;
-                            });
-                          },
-                          icon: isVisible
-                              ? Icon(
-                                  Icons.visibility_off_outlined,
-                                  color: Color(0xff99A1AF),
-                                  size: 20,
-                                )
-                              : Icon(
-                                  Icons.visibility_outlined,
-                                  color: Color(0xff99A1AF),
-                                  size: 20,
-                                ),
-                        ),
-                        hintText: "Confirm your password",
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xffE5E7EB),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: Color(0xff01A5AD),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Transform.scale(
-                          scale: 1.2,
-                          child: Checkbox(
-                              activeColor: Color(0xff00BAC8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadiusGeometry.circular(8),
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              hintText: "e.g. Pujan Dhakal",
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
                               ),
-                              side: BorderSide(
-                                  width: 1.5, color: Color(0xffD1D5DC)),
-                              value: _isChecked,
-                              onChanged: (bool? newValue) {
-                                setState(() {
-                                  _isChecked = newValue ?? false;
-                                });
-                              }),
-                        ),
-                        Expanded(
-                          child: Wrap(
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xffE5E7EB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xff01A5AD),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 16,
+                          ),
+                          Text(
+                            "Email Address",
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 8,
+                          ),
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              hintText: "e.g. dhakalpujan72@gmail.com",
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xffE5E7EB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xff01A5AD),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 16,
+                          ),
+                          Text(
+                            "Phone Number",
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 8,
+                          ),
+                          TextFormField(
+                            decoration: InputDecoration(
+                              hintText: "e.g. 9769786820",
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xffE5E7EB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xff01A5AD),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 16,
+                          ),
+                          Text(
+                            "Password",
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 8,
+                          ),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: isVisible ? true : false,
+                            decoration: InputDecoration(
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    isVisible = !isVisible;
+                                  });
+                                },
+                                icon: isVisible
+                                    ? Icon(
+                                        Icons.visibility_off_outlined,
+                                        color: Color(0xff99A1AF),
+                                        size: 20,
+                                      )
+                                    : Icon(
+                                        Icons.visibility_outlined,
+                                        color: Color(0xff99A1AF),
+                                        size: 20,
+                                      ),
+                              ),
+                              hintText: "Enter your password",
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xffE5E7EB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xff01A5AD),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 16,
+                          ),
+                          Text(
+                            "Confirm Password",
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 8,
+                          ),
+                          TextFormField(
+                            obscureText: isVisible ? true : false,
+                            decoration: InputDecoration(
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    isVisible = !isVisible;
+                                  });
+                                },
+                                icon: isVisible
+                                    ? Icon(
+                                        Icons.visibility_off_outlined,
+                                        color: Color(0xff99A1AF),
+                                        size: 20,
+                                      )
+                                    : Icon(
+                                        Icons.visibility_outlined,
+                                        color: Color(0xff99A1AF),
+                                        size: 20,
+                                      ),
+                              ),
+                              hintText: "Confirm your password",
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xffE5E7EB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color(0xff01A5AD),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
-                                "I agree to the",
-                                style: TextStyle(
-                                  color: Color(0xff4A5565),
-                                ),
+                              Transform.scale(
+                                scale: 1.2,
+                                child: Checkbox(
+                                    activeColor: Color(0xff00BAC8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadiusGeometry.circular(8),
+                                    ),
+                                    side: BorderSide(
+                                        width: 1.5, color: Color(0xffD1D5DC)),
+                                    value: _isChecked,
+                                    onChanged: (bool? newValue) {
+                                      setState(() {
+                                        _isChecked = newValue ?? false;
+                                      });
+                                    }),
                               ),
-                              SizedBox(
-                                width: 4,
-                              ),
-                              Text(
-                                "Terms & Conditions",
-                                style: TextStyle(
-                                  color: Color(0xff009689),
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xff009689),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 4,
-                              ),
-                              Text(
-                                "and",
-                                style: TextStyle(
-                                  color: Color(0xff4A5565),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 4,
-                              ),
-                              Text(
-                                "Privacy Policy.",
-                                style: TextStyle(
-                                  color: Color(0xff009689),
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xff009689),
+                              Expanded(
+                                child: Wrap(
+                                  children: [
+                                    Text(
+                                      "I agree to the",
+                                      style: TextStyle(
+                                        color: Color(0xff4A5565),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 4,
+                                    ),
+                                    Text(
+                                      "Terms & Conditions",
+                                      style: TextStyle(
+                                        color: Color(0xff009689),
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Color(0xff009689),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 4,
+                                    ),
+                                    Text(
+                                      "and",
+                                      style: TextStyle(
+                                        color: Color(0xff4A5565),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 4,
+                                    ),
+                                    Text(
+                                      "Privacy Policy.",
+                                      style: TextStyle(
+                                        color: Color(0xff009689),
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Color(0xff009689),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     SizedBox(
                       height: 20,
                     ),
-                    Container(
-                      alignment: AlignmentGeometry.center,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xff96F7E4).withValues(alpha: 0.55),
-                              spreadRadius: 4,
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xff00B8DB),
-                              Color(0xff009689),
+                    GestureDetector(
+                      onTap: (){},
+                      child: Container(
+                        alignment: AlignmentGeometry.center,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xff96F7E4).withValues(alpha: 0.55),
+                                spreadRadius: 4,
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              )
                             ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )),
-                      child: Text(
-                        "Create Account",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xff00B8DB),
+                                Color(0xff009689),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )),
+                        child: Text(
+                          "Create Account",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -489,7 +518,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context); 
+                      Navigator.pop(context);
                     },
                     child: Text(
                       "Log In",
@@ -499,7 +528,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                       ),
                     ),
                   ),
-                ], 
+                ],
               )
             ],
           ),
