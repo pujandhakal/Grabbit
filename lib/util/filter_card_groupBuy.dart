@@ -83,9 +83,17 @@ class _FilterCardGroupbuyState extends State<FilterCardGroupbuy> {
               ),
             ],
           ),
-        )
+        ),
 
         //Filter option row
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              //tags
+            ],
+          ),
+        )
       ]),
     );
   }
