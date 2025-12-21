@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 const userSchema = mongoose.Schema({
     name:{
-        required: true,
         type: String,
+        required: true,
         trim: true,
     },
     
     email:{
-        required: true,
         type: String,
+        required: true,
         trim: true,
         validate: {
             validator: (value) => {
@@ -24,13 +24,13 @@ const userSchema = mongoose.Schema({
     },
 
     password: {
-        required: true,
         type: String,
+        required: true,
         
     },
 
     phone: {
-        type: Number,
+        type: String,
         trim: true,
     },
 

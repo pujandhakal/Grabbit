@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:grabbit/services/auth_service.dart';
 import 'package:grabbit/util/Shop/gradient_icon.dart';
 
 class UserSignupPage extends StatefulWidget {
@@ -14,6 +15,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
   bool _isChecked = false;
 
   final _signupFormKey = GlobalKey<FormState>();
+  final AuthService authService = AuthService();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -25,6 +27,14 @@ class _UserSignupPageState extends State<UserSignupPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
+  }
+
+  void signUpUser() {
+    authService.signUpUser(
+        context: context,
+        email: _emailController.text,
+        password: _passwordController.text,
+        name: _nameController.text);
   }
 
   @override
@@ -97,11 +107,11 @@ class _UserSignupPageState extends State<UserSignupPage> {
                   ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Form(
                       key: _signupFormKey,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             "Full Name",
@@ -114,6 +124,12 @@ class _UserSignupPageState extends State<UserSignupPage> {
                           ),
                           TextFormField(
                             controller: _nameController,
+                            validator: (val) {
+                              if (val == null || val.isEmpty) {
+                                return "Enter your Name";
+                              }
+                              return null;
+                            },
                             decoration: InputDecoration(
                               hintText: "e.g. Pujan Dhakal",
                               hintStyle: TextStyle(
@@ -148,11 +164,29 @@ class _UserSignupPageState extends State<UserSignupPage> {
                           ),
                           TextFormField(
                             controller: _emailController,
+                            validator: (val) {
+                              if (val == null || val.isEmpty) {
+                                return "Enter your Email";
+                              }
+                              return null;
+                            },
                             decoration: InputDecoration(
                               hintText: "e.g. dhakalpujan72@gmail.com",
                               hintStyle: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color.fromARGB(255, 226, 70, 77),
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: Color.fromARGB(255, 226, 70, 77),
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
@@ -215,6 +249,12 @@ class _UserSignupPageState extends State<UserSignupPage> {
                           ),
                           TextFormField(
                             controller: _passwordController,
+                            validator: (val) {
+                              if (val == null || val.isEmpty) {
+                                return "Enter your Password";
+                              }
+                              return null;
+                            },
                             obscureText: isVisible ? true : false,
                             decoration: InputDecoration(
                               suffixIcon: IconButton(
@@ -381,7 +421,11 @@ class _UserSignupPageState extends State<UserSignupPage> {
                       height: 20,
                     ),
                     GestureDetector(
-                      onTap: (){},
+                      onTap: () {
+                        if (_signupFormKey.currentState!.validate()) {
+                          signUpUser();
+                        }
+                      },
                       child: Container(
                         alignment: AlignmentGeometry.center,
                         padding: EdgeInsets.symmetric(vertical: 16),
@@ -389,7 +433,8 @@ class _UserSignupPageState extends State<UserSignupPage> {
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0xff96F7E4).withValues(alpha: 0.55),
+                                color:
+                                    Color(0xff96F7E4).withValues(alpha: 0.55),
                                 spreadRadius: 4,
                                 blurRadius: 6,
                                 offset: Offset(0, 2),
