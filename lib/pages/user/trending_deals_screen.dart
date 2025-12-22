@@ -188,7 +188,8 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
           ),
           Positioned(
             top: kToolbarHeight + 110,
-            left: 20,
+            left: 16,
+            right: 16,
             child: FilterCardGroupbuy(),
           ),
         ],
