@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:grabbit/util/filter_card_groupBuy.dart';
+import 'package:grabbit/util/join_groupbuy_card.dart';
 
 class TrendingDealsScreen extends StatefulWidget {
   const TrendingDealsScreen({super.key});
@@ -192,6 +193,14 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
             right: 16,
             child: FilterCardGroupbuy(),
           ),
+          Positioned(
+            top: kToolbarHeight + 220,
+            left: 16,
+            right: 16,
+            child: Column(children: [
+              JoinGroupbuyCard(),
+            ]),
+          )
         ],
       ),
     );
