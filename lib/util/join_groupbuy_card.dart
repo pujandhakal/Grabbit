@@ -249,6 +249,8 @@ class _JoinGroupbuyCardState extends State<JoinGroupbuyCard> {
               children: [
                 //title
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       "Organic Coffee Beans 1kg",
@@ -256,10 +258,79 @@ class _JoinGroupbuyCardState extends State<JoinGroupbuyCard> {
                         fontSize: 16,
                       ),
                     ),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Color(0xffF9FAFB),
+                        border: Border.all(
+                          color: Color(0xffE5E7EB),
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            color: Color(0xff00BBA7),
+                            size: 18,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            "2.1 km",
+                            style: TextStyle(
+                              color: Color(0xff6A7282),
+                              fontSize: 12,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
                   ],
-                )
+                ),
 
                 //rating
+                Row(
+                  children: [
+                    Text(
+                      "Daily Groceries",
+                      style: TextStyle(
+                        color: Color(0xff4A5565),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 12,
+                    ),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: Color(0xffFEFCE8),
+                        border: Border.all(color: Color(0xffFFF085)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.star_rounded,
+                            size: 18,
+                            color: Color(0xffFDC700),
+                          ),
+                          SizedBox(
+                            width: 4,
+                          ),
+                          Text(
+                            "4.7",
+                            style: TextStyle(
+                              color: Color(0xff364153),
+                              fontSize: 12,
+                            ),
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                )
 
                 //groupbuy price
 
