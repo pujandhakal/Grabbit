@@ -330,9 +330,77 @@ class _JoinGroupbuyCardState extends State<JoinGroupbuyCard> {
                       ),
                     )
                   ],
-                )
+                ),
 
                 //groupbuy price
+                Container(
+                  padding: EdgeInsets.all(16),
+                  margin: EdgeInsets.only(bottom: 16, top: 16),
+                  decoration: BoxDecoration(
+                    color: Color(0xffF0FDFA),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Color(0xffCBFBF1),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      //price
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "GroupBuy Price",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xff6A7282),
+                                ),
+                              ),
+                              Text(
+                                "Rs. 950",
+                                style: TextStyle(
+                                  fontSize: 36,
+                                  color: Color(0xff009689),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                "Regular Price",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xff99A1AF),
+                                ),
+                              ),
+                              Text(
+                                "Rs. 1,200",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color(0xff99A1AF),
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Color(0xff99A1AF),
+                                ),
+                              )
+                            ],
+                          )
+                        ],
+                      ),
+
+                      //divider
+                      Divider(
+                        color: Color(0xffCBFBF1),
+                        thickness: 1,
+                      ),
+
+                      //you saved
+                    ],
+                  ),
+                )
 
                 //groupbuy progress
 
