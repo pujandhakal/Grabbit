@@ -197,9 +197,15 @@ class _TrendingDealsScreenState extends State<TrendingDealsScreen> {
             top: kToolbarHeight + 220,
             left: 16,
             right: 16,
-            child: Column(children: [
-              JoinGroupbuyCard(),
-            ]),
+            bottom: 0,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  JoinGroupbuyCard(),
+                  JoinGroupbuyCard(),
+                ],
+              ),
+            ),
           )
         ],
       ),

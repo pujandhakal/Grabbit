@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:grabbit/util/Shop/gradient_icon.dart';
 
 class JoinGroupbuyCard extends StatefulWidget {
   const JoinGroupbuyCard({super.key});
@@ -397,12 +398,123 @@ class _JoinGroupbuyCardState extends State<JoinGroupbuyCard> {
                         thickness: 1,
                       ),
 
+                      SizedBox(
+                        height: 8,
+                      ),
+
                       //you saved
+                      Row(children: [
+                        Container(
+                          padding: EdgeInsets.all(6),
+                          margin: EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Color(0xffDCFCE7),
+                          ),
+                          child: Icon(
+                            Icons.trending_up,
+                            color: Color(0xff00A63E),
+                            size: 16,
+                          ),
+                        ),
+                        Text(
+                          "You save Rs. 840",
+                          style: TextStyle(
+                            color: Color(0xff00A63E),
+                          ),
+                        ),
+                      ])
                     ],
                   ),
-                )
+                ),
 
                 //groupbuy progress
+                Container(
+                  padding: EdgeInsets.all(16),
+                  margin: EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Color(0xffF0FDFA),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Color(0xffCBFBF1),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Row(
+                            children: [
+                              GradientIconCard(
+                                icon: Icons.people_outlined,
+                                gradientColors: [
+                                  Color(0xff00BBA7),
+                                  Color(0xff00B8DB),
+                                ],
+                                padding: 8,
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Group Progress",
+                                    style: TextStyle(
+                                      color: Color(0xff4A5565),
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "22",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xff009689),
+                                        ),
+                                      ),
+                                      Text(
+                                        "/ 25 joined",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                "83%",
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: Color(0xff009689),
+                                ),
+                              ),
+                              Text(
+                                "complete",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xff6A7282),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      //progress bar
+
+                      //row icon text
+                    ],
+                  ),
+                ),
 
                 //join button
               ],
