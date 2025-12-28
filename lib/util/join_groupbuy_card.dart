@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:grabbit/util/Shop/gradient_icon.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 
 class JoinGroupbuyCard extends StatefulWidget {
   const JoinGroupbuyCard({super.key});
@@ -509,14 +511,135 @@ class _JoinGroupbuyCardState extends State<JoinGroupbuyCard> {
                         ],
                       ),
 
+                      SizedBox(height: 18),
+
                       //progress bar
+                      LayoutBuilder(builder: (context, constraints) {
+                        return LinearPercentIndicator(
+                          width: constraints.maxWidth,
+                          lineHeight: 12.0,
+                          percent: 0.83,
+                          linearGradient: LinearGradient(colors: [
+                            Colors.black,
+                            Color(0xff5C5C66),
+                          ]),
+                          backgroundColor: Color(0xffE3E4E5),
+                          barRadius: Radius.circular(14),
+                        );
+                      }),
+                      // LinearProgressIndicator(
+                      //   value: 0.83,
+                      //   minHeight: 12,
+                      //   backgroundColor: Color(0xffE5E7EB),
+                      //   color: Color(0xff00BBA7),
+                      // )
 
                       //row icon text
+
+                      SizedBox(
+                        height: 16,
+                      ),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.local_grocery_store_outlined,
+                            size: 16,
+                            color: Color(0xff009689),
+                          ),
+                          SizedBox(
+                            width: 8,
+                          ),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                text: "Only",
+                                style:
+                                    DefaultTextStyle.of(context).style.copyWith(
+                                          color: Color(0xff4A5565),
+                                          fontSize: 12,
+                                        ),
+                                children: [
+                                  TextSpan(
+                                    text: " 5 more ",
+                                    style: TextStyle(
+                                      color: Color(0xff009689),
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: "needed to unlock this deal!",
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
                     ],
                   ),
                 ),
 
                 //join button
+
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 18),
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color.fromARGB(35, 0, 187, 167),
+                          offset: Offset(0, 25),
+                          blurRadius: 50,
+                          spreadRadius: -12,
+                        ),
+                      ],
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xff00B8DB),
+                          Color(0xff00BBA7),
+                          Color(0xff009689),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.people_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          "Join GroupBuy Now",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        SvgPicture.asset(
+                          "assets/images/star_icon.svg",
+                          width: 18,
+                          height: 18,
+                          colorFilter: ColorFilter.mode(
+                            Colors.white,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               ],
             ),
           ),
