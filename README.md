@@ -4,7 +4,7 @@ A Real-Time Platform Connecting Buyers with Local Shops
 
 ## Overview
 
-Grabbit is a web-based platform designed to bridge the gap between consumers and local shops. It allows users to post real-time requests for specific products, enabling nearby shops to respond with offers if they have the item in stock. This promotes efficient shopping, supports local businesses, and fosters direct buyer-seller connections without the need for shops to maintain online inventories.
+Grabbit is a platform designed to bridge the gap between consumers and local shops. It allows users to post real-time requests for specific products, enabling nearby shops to respond with offers if they have the item in stock. This promotes efficient shopping, supports local businesses, and fosters direct buyer-seller connections without the need for shops to maintain online inventories.
 
 Developed as a project by Team Visioneers at Everest Engineering College.
 
@@ -45,9 +45,9 @@ Grabbit tackles common challenges in local shopping:
 ## Technologies Used
 
 - **UI Design**: Figma
-- **Frontend**: React.js
-- **Backend**: Node.js + Express.js
-- **Database**: MongoDB
+- **Mobile Client**: Flutter (Dart)
+- **Backend**: Node.js + Express
+- **Database**: MongoDB (Atlas)
 
 ## Feasibility
 
@@ -56,7 +56,7 @@ Grabbit tackles common challenges in local shopping:
 
 ## Future Scope
 
-1. Mobile App with offline request processing.
+1. Offline request drafting with sync when reconnected.
 2. Analytics dashboard for shopkeepers.
 3. Smart matching based on location, urgency, and product type.
 
@@ -68,58 +68,70 @@ Grabbit tackles common challenges in local shopping:
   - Saurav Pant
   - Pujan Dhakal
 
+## Repository Layout
+
+- `lib/` — Flutter app (entrypoint `lib/main.dart`).
+  - `pages/` — screens, split into `user/` and `Shop/` flows.
+  - `util/` — reusable widgets and cards composed by pages.
+  - `services/` — API clients (e.g. `auth_service.dart`).
+  - `models/`, `constants/` — data models and shared helpers.
+- `server/` — Node.js + Express backend.
+  - `index.js` — entrypoint, listens on port 3000.
+  - `routes/` — Express route handlers.
+  - `models/` — Mongoose schemas.
+- `assets/images/` — bundled icons and SVGs (declared in `pubspec.yaml`).
+
 ## Installation and Setup
 
-(Assuming a standard MERN stack setup; adjust as needed based on your environment.)
+### Prerequisites
 
-1. **Prerequisites**:
-   - Node.js (v14+)
-   - MongoDB
-   - Git
+- Flutter SDK (Dart `>=3.6.0 <4.0.0`)
+- Node.js (v18+) and npm
+- A MongoDB connection string (Atlas or local)
+- Android Studio / Xcode for running on an emulator or device
 
-2. **Clone the Repository**:
-   ```
-   git clone https://github.com/your-repo/grabbit.git
-   cd grabbit
-   ```
+### 1. Clone the repository
 
-3. **Install Dependencies**:
-   - Frontend:
-     ```
-     cd frontend
-     npm install
-     ```
-   - Backend:
-     ```
-     cd ../backend
-     npm install
-     ```
+```
+git clone https://github.com/your-repo/grabbit.git
+cd grabbit
+```
 
-4. **Configure Environment**:
-   - Create a `.env` file in the backend directory with your MongoDB URI and other secrets (e.g., `MONGO_URI=mongodb://localhost:27017/grabbit`).
+### 2. Run the backend
 
-5. **Run the Application**:
-   - Start the backend:
-     ```
-     cd backend
-     npm start
-     ```
-   - Start the frontend:
-     ```
-     cd ../frontend
-     npm start
-     ```
+```
+cd server
+npm install
+npm run dev      # nodemon, auto-reloads on change
+# or: npm start
+```
 
-6. **Access the App**:
-   - Open `http://localhost:3000` in your browser.
+The server listens on `0.0.0.0:3000`. The MongoDB URI is currently set inline in `server/index.js` — replace it with your own connection string before running.
+
+### 3. Run the Flutter client
+
+From the repo root:
+
+```
+flutter pub get
+flutter run
+```
+
+The client makes HTTP calls to a hardcoded LAN address (see `lib/services/auth_service.dart`, e.g. `http://192.168.1.69:3000`). Update the host to match the machine running the backend — your dev machine's LAN IP for a physical device, or `10.0.2.2` for the Android emulator.
+
+### 4. Useful commands
+
+- `flutter analyze` — static analysis.
+- `flutter test` — run widget/unit tests.
+- `flutter pub run flutter_launcher_icons` — regenerate launcher icons after replacing `assets/images/grabbit_logo.png`.
 
 ## Demo
 
-For a live demo, refer to the project presentation or deployed version (if available). Contact the team for access.
+For a live demo, refer to the project presentation or contact the team.
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and submit a pull request with your changes.
+Contributions are welcome. Please fork the repository and open a pull request with your changes.
 
 ## License
 
