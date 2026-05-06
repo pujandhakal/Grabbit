@@ -6,7 +6,6 @@ A Real-Time Platform Connecting Buyers with Local Shops
 
 Grabbit is a platform designed to bridge the gap between consumers and local shops. It allows users to post real-time requests for specific products, enabling nearby shops to respond with offers if they have the item in stock. This promotes efficient shopping, supports local businesses, and fosters direct buyer-seller connections without the need for shops to maintain online inventories.
 
-Developed as a project by Team Visioneers at Everest Engineering College.
 
 ## Problems Addressed
 

@@ -1,30 +1,59 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:grabbit/main.dart';
+import 'package:grabbit/app/app.dart';
+import 'package:grabbit/app/router/app_router.dart';
+import 'package:grabbit/app/router/route_paths.dart';
+import 'package:grabbit/features/auth/presentation/screens/sign_up_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('app boots into login', (tester) async {
+    await tester.pumpWidget(const ProviderScope(child: GrabbitApp()));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('Log In'), findsOneWidget);
+    expect(find.text('Grabbit'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('shell navigation switches between main tabs', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.home);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quick Actions'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('nav-chats')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Search chats...'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Profile'), findsOneWidget);
+  });
+
+  testWidgets('sign up screen renders create account flow', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: SignUpScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Join Grabbit'), findsOneWidget);
+    expect(find.widgetWithText(InkWell, 'Create Account'), findsOneWidget);
   });
 }

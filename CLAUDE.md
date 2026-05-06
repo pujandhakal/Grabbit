@@ -1,59 +1,58 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides repository-specific guidance for coding agents working in this project.
 
 ## Project shape
 
-Grabbit is a Flutter mobile client (`lib/`) talking to a Node.js + Express + MongoDB backend (`server/`). The README at the repo root is outdated — it describes a React frontend; ignore that. The real client is Flutter. The MERN-style "frontend/backend" split it mentions does not exist in this tree.
+Grabbit is a Flutter client in `lib/` with a Node.js + Express + MongoDB backend in `server/`. The active Flutter architecture is feature-first:
+
+- `lib/app/` - bootstrap, theme, router
+- `lib/core/` - shared config, networking, errors, reusable widgets
+- `lib/features/` - vertical feature modules such as `auth`, `home`, `requests`, `chat`, `profile`, `shop`, and `shell`
+
+Legacy Flutter folders (`pages`, `util`, `services`, `models`, `constants`) were removed. New work should follow the current structure rather than recreating screen-first folders.
 
 ## Commands
 
 Flutter client (run from repo root):
-- `flutter pub get` — install Dart dependencies after pulling or editing `pubspec.yaml`.
-- `flutter run` — launch on the connected device/emulator. Default entrypoint is `lib/main.dart`, which boots `LoginPage`.
-- `flutter analyze` — static analysis using `analysis_options.yaml` (extends `package:flutter_lints/flutter.yaml`).
-- `flutter test` — run widget/unit tests in `test/`. Single test: `flutter test test/<file>.dart` or `flutter test --plain-name "<test name>"`.
-- `flutter pub run flutter_launcher_icons` — regenerate launcher icons after changing `assets/images/grabbit_logo.png` (config lives in `pubspec.yaml` under `flutter_launcher_icons:`).
+- `flutter pub get` - install Dart dependencies after editing `pubspec.yaml`
+- `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000` - run against a local backend on Android emulator
+- `flutter analyze` - static analysis using `flutter_lints`
+- `flutter test` - run widget/unit tests
+- `flutter test test/features/auth/presentation/auth_controller_test.dart` - run one focused test file
 
 Backend (run from `server/`):
-- `npm install` — install Node dependencies.
-- `npm run dev` — start with nodemon (auto-reload).
-- `npm start` — start once with `node ./index.js`. Listens on `0.0.0.0:3000`.
+- `npm install`
+- `npm run dev`
+- `npm start`
 
-## Client ↔ server wiring
+## Architecture rules
 
-- The Flutter client hits the backend over plain HTTP at a hardcoded LAN IP — see `lib/services/auth_service.dart` (`http://192.168.1.69:3000/api/signup`). When working on networked features, expect to update that base URL to match the dev machine's IP, or run the backend locally and use the device emulator's host alias.
-- The backend listens on `0.0.0.0:3000` (`server/index.js`) and connects to a MongoDB Atlas cluster via a connection string also hardcoded in `server/index.js`. Treat that as a dev-only setup — don't surface or commit credential changes without asking.
-- Routes live in `server/routes/` (currently only `auth.js`, mounted at root in `index.js`). The signup route returns `{ msg }` on 400 and `{ err }` on 500.
-- Client error handling lives in `lib/constants/error_handling.dart` (`httpErrorHandle`). It currently reads `body['msg']` for 400 and `body['error']` for 500 — note the 500 case mismatches the server's `{ err }` payload. Fix on either side when touching error flows.
+- Use Riverpod for state management and dependency injection. Shared async feature state belongs in feature controllers/providers, not in widgets.
+- Use `go_router` for app navigation. Top-level routes are defined in `lib/app/router/app_router.dart`; avoid scattering route construction across screens.
+- Keep networking behind `lib/core/network/api_client.dart`. Repositories should depend on abstractions and return domain entities, not raw `http.Response`.
+- Reusable code goes in `core/` only if it is genuinely cross-feature. Feature-specific widgets, controllers, and repository code stay inside the owning feature.
+- Avoid passing `BuildContext` into repositories or network code. UI feedback such as snackbars belongs in presentation.
 
-## Flutter app architecture
+## Client-server wiring
 
-Two parallel user journeys share the same client:
+- The Flutter app reads the backend URL from `AppConfig.defaultBaseUrl`, which comes from `--dart-define=API_BASE_URL=...`.
+- The current default is `http://10.0.2.2:3000`, which is correct for Android emulator talking to a backend running on the same machine.
+- The backend listens on `0.0.0.0:3000` in `server/index.js`.
+- The signup flow is the only real API-backed auth flow today. It posts to `/api/signup` through the auth repository.
+- `server/index.js` still contains a hardcoded MongoDB connection string. Treat that as a dev-only leftover, not a pattern to copy.
 
-- **User flow** (`lib/pages/user/`) — entry after login is `UserMainScreen`, a stateful bottom-nav shell with four tabs (`HomePage`, `MyRequestsScreen`, `ChatListScreen`, `UserProfilePage`) plus a central floating "+" that pushes `PostRequestPage`. The active tab is just an index into a `_screens` list — adding a tab means editing both the list and `_buildNavItem` calls in `lib/pages/user/user_main_screen.dart`.
-- **Shop flow** (`lib/pages/Shop/`) — currently just `shop_dashboard_page.dart`. Login does not yet route here; the only way in today is via direct navigation. When wiring real auth, the `User.type` field (`"user"` vs shop) is what should drive which root screen is mounted.
+## Current app behavior
 
-Top-level pages (`intro_page.dart`, `login_page.dart`, chat screens) live directly under `lib/pages/`.
+- App entrypoint is `lib/main.dart`, which boots `ProviderScope` and `GrabbitApp`.
+- Initial route is `/login`.
+- Main authenticated shell is a `StatefulShellRoute.indexedStack` with tabs for home, requests, chats, and profile.
+- `post-request` and `shop-dashboard` are separate leaf routes outside the bottom-nav shell.
+- Login is still a UI-only transition to the shell. Signup is wired to the backend. Do not assume token persistence or a real login API exists yet.
 
-### Widgets vs pages
+## Testing expectations
 
-`lib/util/` is the project's component library — every reusable card/tile/button lives here, named by purpose (`live_request_card.dart`, `join_groupbuy_card.dart`, `chat_bubble.dart`, etc.). Shop-specific widgets are nested under `lib/util/Shop/`. **Pages compose util widgets; util widgets do not import pages.** When building a new screen, scan `lib/util/` first — most card patterns already exist.
-
-### Auth + models
-
-- `lib/models/user.dart` mirrors `server/models/user.js`. The Mongoose schema does not store `phone`, `type`, or `token` consistently with the Dart model — when adding fields, update both sides.
-- `lib/services/auth_service.dart` is the only service today. It constructs a `User`, posts JSON, and pipes the response through `httpErrorHandle`. New API calls should follow the same shape: build a model, POST/GET via `package:http`, route the response through `httpErrorHandle` with an `onSuccess` callback.
-- `lib/main.dart` always opens `LoginPage` — there is no token persistence or auto-login yet. The login button currently navigates straight to `UserMainScreen` without calling the backend (see `login_page.dart`); the signup form is the only path that actually hits `/api/signup`.
-
-### Styling conventions
-
-- Theme is set once in `main.dart` via `GoogleFonts.varelaRoundTextTheme()` — don't re-apply font families per-widget.
-- The app's brand gradient is `[Color(0xff00B8DB), Color(0xff009689)]` (cyan→teal), used for the primary CTA, the login icon badge, and the central FAB. Reuse those exact hex values rather than introducing close variants.
-- SVG icons are loaded from `assets/images/` via `flutter_svg`. New SVGs must be added to the `assets:` block in `pubspec.yaml` (currently the whole `assets/images/` directory is included).
-
-## Things to know before changing
-
-- `pubspec.yaml` declares Dart SDK `>=3.6.0 <4.0.0`. Flutter version is whatever satisfies that — there's no FVM config.
-- There are no integration tests, no CI config, and no lint rules beyond `flutter_lints` defaults.
-- The `server/` directory has its own `node_modules/` checked-in status governed by the root `.gitignore` — verify before adding npm deps.
+- Keep tests under `test/`, preferably mirroring the feature structure.
+- When changing repositories/controllers, add targeted unit tests.
+- When changing routing or screen composition, keep at least one widget-level smoke test covering the path.
+- Before finishing, run `flutter analyze` and `flutter test`.
