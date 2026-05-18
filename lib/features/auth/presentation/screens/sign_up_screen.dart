@@ -138,7 +138,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text('Full name', style: theme.textTheme.titleSmall),
+                            Text('Full name',
+                                style: theme.textTheme.titleSmall),
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: _nameController,
@@ -153,7 +154,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               },
                             ),
                             const SizedBox(height: 18),
-                            Text('Email address', style: theme.textTheme.titleSmall),
+                            Text('Email address',
+                                style: theme.textTheme.titleSmall),
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: _emailController,

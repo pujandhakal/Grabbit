@@ -33,8 +33,8 @@ abstract final class AppTheme {
       useMaterial3: true,
     );
 
-    final textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme)
-        .copyWith(
+    final textTheme =
+        GoogleFonts.plusJakartaSansTextTheme(base.textTheme).copyWith(
       headlineLarge: GoogleFonts.plusJakartaSans(
         fontSize: 34,
         fontWeight: FontWeight.w700,

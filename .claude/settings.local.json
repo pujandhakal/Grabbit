@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"E:\\\\Flutter_dart\\\\learning_session_practice\\\\grabbit\\\\assets\" -Recurse -Force)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Sort-Object FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Test-Path *)",
+      "Bash(flutter pub *)",
+      "Bash(flutter analyze *)",
+      "Bash(git stash *)",
+      "Bash(flutter test *)"
+    ]
+  }
+}

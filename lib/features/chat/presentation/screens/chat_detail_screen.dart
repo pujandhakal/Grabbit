@@ -32,9 +32,10 @@ class ChatDetailScreen extends StatelessWidget {
                         backgroundColor: AppColors.primarySoft,
                         child: Text(
                           shopName.characters.first,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: AppColors.primaryDark,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: AppColors.primaryDark,
+                                  ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -42,7 +43,8 @@ class ChatDetailScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(shopName, style: Theme.of(context).textTheme.titleMedium),
+                            Text(shopName,
+                                style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: 4),
                             Text(
                               'Delivery is given on time',
@@ -73,7 +75,8 @@ class ChatDetailScreen extends StatelessWidget {
                     SizedBox(height: 12),
                     _MessageBubble(
                       alignRight: false,
-                      message: 'Final price is NPR 5,200 with the charger included.',
+                      message:
+                          'Final price is NPR 5,200 with the charger included.',
                     ),
                   ],
                 ),

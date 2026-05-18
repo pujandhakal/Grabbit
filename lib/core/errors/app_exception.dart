@@ -8,5 +8,6 @@ class AppException implements Exception {
   final int? statusCode;
 
   @override
-  String toString() => 'AppException(statusCode: $statusCode, message: $message)';
+  String toString() =>
+      'AppException(statusCode: $statusCode, message: $message)';
 }

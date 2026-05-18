@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
-import 'package:grabbit/core/widgets/app_soft_background.dart';
+import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
 
@@ -13,68 +13,61 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AppSoftBackground(
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 130),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate(
-                    [
-                      const _Header(),
-                      const SizedBox(height: 20),
-                      _SearchBar(
-                        onTap: () => context.push(RoutePaths.postRequest),
-                      ),
-                      const SizedBox(height: 24),
-                      const AppSectionHeader(title: 'Quick Actions'),
-                      const SizedBox(height: 14),
-                      _QuickActions(
-                        onPostRequest: () =>
-                            context.push(RoutePaths.postRequest),
-                        onNearbyShops: () => context.go(RoutePaths.requests),
-                        onOffersAndChats: () => context.go(RoutePaths.chats),
-                        onFavourites: () => context.go(RoutePaths.profile),
-                      ),
-                      const SizedBox(height: 28),
-                      const AppSectionHeader(
-                        title: 'Live Requests',
-                        actionLabel: 'View all',
-                      ),
-                      const SizedBox(height: 14),
-                      ..._liveRequests.map(
-                        (request) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _LiveRequestCard(request: request),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      const AppSectionHeader(
-                        title: 'Trending Deals',
-                        actionLabel: 'See all',
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        height: 274,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _trendingDeals.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 14),
-                          itemBuilder: (context, index) {
-                            return _TrendingDealCard(
-                              deal: _trendingDeals[index],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      body: AppStickyPage(
+        header: Column(
+          children: [
+            const _Header(),
+            const SizedBox(height: 16),
+            _SearchBar(
+              onTap: () => context.push(RoutePaths.postRequest),
+            ),
+          ],
+        ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 130),
+          children: [
+            const AppSectionHeader(title: 'Quick Actions'),
+            const SizedBox(height: 14),
+            _QuickActions(
+              onPostRequest: () => context.push(RoutePaths.postRequest),
+              onNearbyShops: () => context.go(RoutePaths.requests),
+              onOffersAndChats: () => context.go(RoutePaths.chats),
+              onFavourites: () => context.go(RoutePaths.profile),
+            ),
+            const SizedBox(height: 20),
+            const AppSectionHeader(
+              title: 'Live Requests',
+              actionLabel: 'View all',
+            ),
+            const SizedBox(height: 14),
+            ..._liveRequests.map(
+              (request) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _LiveRequestCard(request: request),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 14),
+            const AppSectionHeader(
+              title: 'Trending Deals',
+              actionLabel: 'See all',
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 332,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.only(top: 8),
+                itemCount: _trendingDeals.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 18),
+                itemBuilder: (context, index) {
+                  return _TrendingDealCard(
+                    deal: _trendingDeals[index],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -208,11 +201,13 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.count(
+      padding: EdgeInsets.zero,
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
+      clipBehavior: Clip.none,
+      crossAxisSpacing: 18,
+      mainAxisSpacing: 14,
       childAspectRatio: 1.42,
       children: [
         _QuickActionCard(
@@ -259,11 +254,28 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        onTap: onTap,
+        boxShadow: [
+          BoxShadow(
+            color: gradient.first.withValues(alpha: 0.38),
+            blurRadius: 40,
+            spreadRadius: 0,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: gradient.first.withValues(alpha: 0.20),
+            blurRadius: 14,
+            spreadRadius: -2,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(28),
+        clipBehavior: Clip.antiAlias,
         child: Ink(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -271,37 +283,32 @@ class _QuickActionCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: gradient.first.withValues(alpha: 0.24),
-                blurRadius: 24,
-                offset: const Offset(0, 14),
-              ),
-            ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(icon, color: Colors.white),
                   ),
-                  child: Icon(icon, color: Colors.white),
-                ),
-                const Spacer(),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                      ),
-                ),
-              ],
+                  const Spacer(),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                        ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -366,73 +373,91 @@ class _TrendingDealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 214,
+      width: 260,
       child: AppSurfaceCard(
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                AppStatusChip(
-                  label: deal.tag,
-                  tone: deal.tag == 'Flash Deal'
-                      ? AppStatusTone.accent
-                      : AppStatusTone.blue,
+            SizedBox(
+              height: 130,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
                 ),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    deal.assetPath,
-                    width: 54,
-                    height: 54,
-                    fit: BoxFit.cover,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.asset(
+                        deal.assetPath,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: AppStatusChip(
+                        label: deal.tag,
+                        tone: deal.tag == 'Flash Deal'
+                            ? AppStatusTone.accent
+                            : AppStatusTone.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    deal.product,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              deal.product,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              deal.shop,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const Spacer(),
-            Text(
-              deal.price,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              deal.originalPrice,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    decoration: TextDecoration.lineThrough,
+                  const SizedBox(height: 6),
+                  Text(
+                    deal.shop,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                AppStatusChip(
-                  label: deal.discount,
-                  tone: AppStatusTone.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    deal.joined,
-                    textAlign: TextAlign.right,
+                  const SizedBox(height: 10),
+                  Text(
+                    deal.price,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    deal.originalPrice,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.lineThrough,
                         ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      AppStatusChip(
+                        label: deal.discount,
+                        tone: AppStatusTone.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          deal.joined,
+                          textAlign: TextAlign.right,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),

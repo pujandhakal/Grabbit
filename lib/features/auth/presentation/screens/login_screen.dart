@@ -131,7 +131,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 12),
                             OutlinedButton(
-                              onPressed: () => context.go(RoutePaths.shopDashboard),
+                              onPressed: () =>
+                                  context.go(RoutePaths.shopDashboard),
                               child: const Text('Open Shop Dashboard'),
                             ),
                           ],
@@ -152,12 +153,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     const _SocialButton(
                       label: 'Continue with Google',
-                      assetPath: 'assets/images/google_logo.svg',
+                      assetPath: 'assets/logos/google_logo.svg',
                     ),
                     const SizedBox(height: 12),
                     const _SocialButton(
                       label: 'Continue with Facebook',
-                      assetPath: 'assets/images/facebook_logo.svg',
+                      assetPath: 'assets/logos/facebook_logo.svg',
                     ),
                     const SizedBox(height: 16),
                     Wrap(

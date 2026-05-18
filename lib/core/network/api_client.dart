@@ -47,7 +47,8 @@ class ApiClient {
       );
     } catch (_) {
       throw const AppException(
-        message: 'Unable to reach the server. Check the API base URL and try again.',
+        message:
+            'Unable to reach the server. Check the API base URL and try again.',
       );
     }
 

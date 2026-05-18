@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
-import 'package:grabbit/core/widgets/app_soft_background.dart';
+import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
 
@@ -11,46 +10,35 @@ class ShopDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AppSoftBackground(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
-            children: [
-              const Text(
-                'Shop Dashboard',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.text,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Respond faster to high-intent local buyers nearby.',
-                style: TextStyle(color: AppColors.textMuted),
-              ),
-              const SizedBox(height: 18),
-              const AppSectionHeader(title: 'Overview'),
-              const SizedBox(height: 12),
-              const _StatCard(
-                title: '12 active customer requests',
-                subtitle: '3 requests were posted in the last hour.',
-                tone: AppStatusTone.primary,
-              ),
-              const SizedBox(height: 12),
-              const _StatCard(
-                title: '4 group-buy opportunities',
-                subtitle: 'Bundle responses can unlock higher conversions.',
-                tone: AppStatusTone.blue,
-              ),
-              const SizedBox(height: 12),
-              const _StatCard(
-                title: 'Top message',
-                subtitle: 'Laptop accessories and audio gear are trending today.',
-                tone: AppStatusTone.accent,
-              ),
-            ],
-          ),
+      body: AppStickyPage(
+        bottomSafeArea: true,
+        header: const AppScreenHeader(
+          title: 'Shop Dashboard',
+          subtitle: 'Respond faster to high-intent local buyers nearby.',
+        ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: const [
+            AppSectionHeader(title: 'Overview'),
+            SizedBox(height: 12),
+            _StatCard(
+              title: '12 active customer requests',
+              subtitle: '3 requests were posted in the last hour.',
+              tone: AppStatusTone.primary,
+            ),
+            SizedBox(height: 12),
+            _StatCard(
+              title: '4 group-buy opportunities',
+              subtitle: 'Bundle responses can unlock higher conversions.',
+              tone: AppStatusTone.blue,
+            ),
+            SizedBox(height: 12),
+            _StatCard(
+              title: 'Top message',
+              subtitle: 'Laptop accessories and audio gear are trending today.',
+              tone: AppStatusTone.accent,
+            ),
+          ],
         ),
       ),
     );
