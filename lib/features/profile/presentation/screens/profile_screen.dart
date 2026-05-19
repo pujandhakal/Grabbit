@@ -7,112 +7,157 @@ import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:grabbit/features/profile/data/repositories/customer_profile_repository.dart';
+import 'package:grabbit/features/profile/presentation/widgets/delete_account_sheet.dart';
+
+const _dangerColor = Color(0xFFE5484D);
+const _dangerSoftColor = Color(0xFFFFECEE);
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authControllerProvider).value;
-    final name = user?.name ?? 'Sarah Johnson';
-    final email = user?.email ?? 'sarah.j@email.com';
-    final phone = user?.phone ?? '+91 98765 43210';
-    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'S';
+    final profile = ref.watch(customerProfileProvider);
 
     return Scaffold(
       body: AppStickyPage(
         header: const AppScreenHeader(title: 'Profile'),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
-          children: [
-            _ProfileHeaderCard(
-              initial: initial,
-              name: name,
-              email: email,
-              phone: phone,
+        child: profile.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Unable to load profile.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
-            const SizedBox(height: 18),
-            const AppSectionHeader(title: 'Account'),
-            const SizedBox(height: 12),
-            _ProfileSectionCard(
-              rows: [
-                _ProfileRow(
-                  icon: Icons.edit_outlined,
-                  label: 'Edit Profile',
-                  onTap: () {},
-                ),
-                _ProfileRow(
-                  icon: Icons.location_on_outlined,
-                  label: 'Saved Addresses',
-                  badge: '3',
-                  onTap: () {},
-                ),
-                _ProfileRow(
-                  icon: Icons.star_border_rounded,
-                  label: 'My Reviews',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            const AppSectionHeader(title: 'Settings'),
-            const SizedBox(height: 12),
-            _ProfileSectionCard(
-              rows: [
-                _ProfileRow(
-                  icon: Icons.notifications_outlined,
-                  label: 'Notifications',
-                  badge: '7',
-                  onTap: () {},
-                ),
-                _ProfileRow(
-                  icon: Icons.tune_rounded,
-                  label: 'Preferences',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            const AppSectionHeader(title: 'Support'),
-            const SizedBox(height: 12),
-            _ProfileSectionCard(
-              rows: [
-                _ProfileRow(
-                  icon: Icons.help_outline_rounded,
-                  label: 'Help & Support',
-                  onTap: () {},
-                ),
-                _ProfileRow(
-                  icon: Icons.description_outlined,
-                  label: 'Terms & Conditions',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: () {
-                ref.read(authControllerProvider.notifier).logout();
-                context.go(RoutePaths.login);
-              },
-              icon: const Icon(Icons.logout_rounded),
-              label: const Text('Log Out'),
-            ),
-            const SizedBox(height: 18),
-            Column(
+          ),
+          data: (profile) {
+            final name = profile.user.name;
+            final initial =
+                name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'C';
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
               children: [
-                Text(
-                  'Grabbit v1.0.0',
-                  style: Theme.of(context).textTheme.bodySmall,
+                _ProfileHeaderCard(
+                  initial: initial,
+                  name: name,
+                  email: profile.user.email,
+                  phone: profile.user.phone.isEmpty
+                      ? 'Phone not added'
+                      : profile.user.phone,
+                  requests: profile.stats.totalRequests.toString(),
+                  completed: profile.stats.completedRequests.toString(),
+                  reviews: profile.stats.reviewCount.toString(),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Member since Jan 2024',
-                  style: Theme.of(context).textTheme.bodySmall,
+                const SizedBox(height: 18),
+                const AppSectionHeader(title: 'Account'),
+                const SizedBox(height: 12),
+                _ProfileSectionCard(
+                  rows: [
+                    _ProfileRow(
+                      icon: Icons.edit_outlined,
+                      label: 'Edit Profile',
+                      onTap: () => context.push(RoutePaths.editProfile),
+                    ),
+                    _ProfileRow(
+                      icon: Icons.location_on_outlined,
+                      label: 'Saved Addresses',
+                      badge: profile.addresses.length.toString(),
+                      onTap: () => context.push(RoutePaths.savedAddresses),
+                    ),
+                    _ProfileRow(
+                      icon: Icons.star_border_rounded,
+                      label: 'My Reviews',
+                      badge: profile.stats.reviewCount.toString(),
+                      onTap: () => context.push(RoutePaths.myReviews),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const AppSectionHeader(title: 'Settings'),
+                const SizedBox(height: 12),
+                _ProfileSectionCard(
+                  rows: [
+                    _ProfileRow(
+                      icon: Icons.notifications_outlined,
+                      label: 'Notifications',
+                      badge: profile.enabledNotificationCount.toString(),
+                      onTap: () =>
+                          context.push(RoutePaths.notificationSettings),
+                    ),
+                    _ProfileRow(
+                      icon: Icons.tune_rounded,
+                      label: 'Request Defaults',
+                      badge: profile.preferences.categories.isEmpty
+                          ? null
+                          : profile.preferences.categories.length.toString(),
+                      onTap: () => context.push(RoutePaths.requestDefaults),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const AppSectionHeader(title: 'Support'),
+                const SizedBox(height: 12),
+                _ProfileSectionCard(
+                  rows: [
+                    _ProfileRow(
+                      icon: Icons.help_outline_rounded,
+                      label: 'Help & Support',
+                      onTap: () => context.push(RoutePaths.helpSupport),
+                    ),
+                    _ProfileRow(
+                      icon: Icons.description_outlined,
+                      label: 'Terms & Conditions',
+                      onTap: () => context.push(RoutePaths.termsConditions),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const AppSectionHeader(title: 'Danger Zone'),
+                const SizedBox(height: 12),
+                _ProfileSectionCard(
+                  rows: [
+                    _ProfileRow(
+                      icon: Icons.delete_forever_rounded,
+                      label: 'Delete Account',
+                      iconBackgroundColor: _dangerSoftColor,
+                      iconColor: _dangerColor,
+                      labelColor: _dangerColor,
+                      onTap: () => showDeleteAccountSheet(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await ref.read(authControllerProvider.notifier).logout();
+                    if (context.mounted) {
+                      context.go(RoutePaths.login);
+                    }
+                  },
+                  icon: const Icon(Icons.logout_rounded),
+                  label: const Text('Log Out'),
+                ),
+                const SizedBox(height: 18),
+                Column(
+                  children: [
+                    Text(
+                      'Grabbit v1.0.0',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Member since ${profile.memberSince}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -125,12 +170,18 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.name,
     required this.email,
     required this.phone,
+    required this.requests,
+    required this.completed,
+    required this.reviews,
   });
 
   final String initial;
   final String name;
   final String email;
   final String phone;
+  final String requests;
+  final String completed;
+  final String reviews;
 
   @override
   Widget build(BuildContext context) {
@@ -169,20 +220,22 @@ class _ProfileHeaderCard extends StatelessWidget {
           const SizedBox(height: 16),
           IntrinsicHeight(
             child: Row(
-              children: const [
-                Expanded(child: _ProfileStat(value: '24', label: 'Requests')),
+              children: [
+                Expanded(
+                    child: _ProfileStat(value: requests, label: 'Requests')),
                 VerticalDivider(
                   width: 1,
                   thickness: 1,
                   color: AppColors.outline,
                 ),
-                Expanded(child: _ProfileStat(value: '18', label: 'Completed')),
+                Expanded(
+                    child: _ProfileStat(value: completed, label: 'Completed')),
                 VerticalDivider(
                   width: 1,
                   thickness: 1,
                   color: AppColors.outline,
                 ),
-                Expanded(child: _ProfileStat(value: '4.8', label: 'Rating')),
+                Expanded(child: _ProfileStat(value: reviews, label: 'Reviews')),
               ],
             ),
           ),
@@ -251,12 +304,18 @@ class _ProfileRow extends StatelessWidget {
     required this.label,
     this.badge,
     this.onTap,
+    this.iconBackgroundColor,
+    this.iconColor,
+    this.labelColor,
   });
 
   final IconData icon;
   final String label;
   final String? badge;
   final VoidCallback? onTap;
+  final Color? iconBackgroundColor;
+  final Color? iconColor;
+  final Color? labelColor;
 
   @override
   Widget build(BuildContext context) {
@@ -269,12 +328,19 @@ class _ProfileRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
-              AppIconBadge(icon: icon, size: 40),
+              AppIconBadge(
+                icon: icon,
+                size: 40,
+                backgroundColor: iconBackgroundColor ?? AppColors.primarySoft,
+                foregroundColor: iconColor ?? AppColors.primaryDark,
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   label,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: labelColor,
+                      ),
                 ),
               ),
               if (badge != null) ...[

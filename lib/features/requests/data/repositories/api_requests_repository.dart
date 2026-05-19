@@ -63,6 +63,22 @@ class ApiRequestsRepository implements RequestsRepository {
   }
 
   @override
+  Future<RequestSummary> completeRequestPurchase({
+    required String requestId,
+    required String shopUserId,
+  }) async {
+    final data = await _apiClient.put(
+      '/api/requests/$requestId/complete',
+      body: {'shopUserId': shopUserId},
+    );
+    final requestData = data['request'];
+    if (requestData is Map<String, dynamic>) {
+      return RequestSummaryModel.fromMap(requestData);
+    }
+    return RequestSummaryModel.fromMap(const {});
+  }
+
+  @override
   Future<List<ShopRequest>> fetchShopRequests() async {
     final data = await _apiClient.get('/api/shop/requests');
     final items = data['requests'];

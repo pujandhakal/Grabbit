@@ -6,4 +6,9 @@ abstract class AuthRepository {
   Future<UserEntity> signUp(SignUpPayload payload);
 
   Future<UserEntity> login(LoginPayload payload);
+
+  Future<void> deleteAccount({
+    required String password,
+    required String confirmation,
+  });
 }

@@ -71,16 +71,53 @@ void main() {
 
     expect(container.read(authControllerProvider).hasError, isTrue);
   });
+
+  test('auth controller clears session after deleting account', () async {
+    final repository = _FakeAuthRepository(
+      result: const UserEntity(
+        id: '1',
+        name: 'Pujan',
+        email: 'pujan@example.com',
+        phone: '',
+        role: UserRole.customer,
+        token: 'token',
+      ),
+    );
+
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(authControllerProvider.notifier);
+    await notifier.login(
+      const LoginPayload(
+        email: 'pujan@example.com',
+        password: '12345678',
+      ),
+    );
+
+    await notifier.deleteAccount(
+      password: '12345678',
+      confirmation: 'DELETE',
+    );
+
+    expect(repository.deleted, isTrue);
+    expect(container.read(authControllerProvider).requireValue, isNull);
+  });
 }
 
 class _FakeAuthRepository implements AuthRepository {
-  const _FakeAuthRepository({
+  _FakeAuthRepository({
     this.result,
     this.error,
   });
 
   final UserEntity? result;
   final AppException? error;
+  bool deleted = false;
 
   @override
   Future<UserEntity> signUp(SignUpPayload payload) async {
@@ -98,5 +135,17 @@ class _FakeAuthRepository implements AuthRepository {
     }
 
     return result!;
+  }
+
+  @override
+  Future<void> deleteAccount({
+    required String password,
+    required String confirmation,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    deleted = true;
   }
 }

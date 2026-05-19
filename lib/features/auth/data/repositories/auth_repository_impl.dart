@@ -46,4 +46,18 @@ class AuthRepositoryImpl implements AuthRepository {
       'token': data['token'] as String? ?? '',
     });
   }
+
+  @override
+  Future<void> deleteAccount({
+    required String password,
+    required String confirmation,
+  }) async {
+    await _apiClient.delete(
+      '/api/account',
+      body: {
+        'password': password,
+        'confirmation': confirmation,
+      },
+    );
+  }
 }

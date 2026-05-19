@@ -12,6 +12,11 @@ abstract class RequestsRepository {
 
   Future<RequestSummary> createRequest(CreateRequestPayload payload);
 
+  Future<RequestSummary> completeRequestPurchase({
+    required String requestId,
+    required String shopUserId,
+  });
+
   Future<List<ShopRequest>> fetchShopRequests();
 
   Future<ShopResponse> createShopResponse(CreateShopResponsePayload payload);

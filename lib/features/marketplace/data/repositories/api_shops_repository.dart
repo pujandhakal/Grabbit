@@ -23,4 +23,21 @@ class ApiShopsRepository implements ShopsRepository {
     }
     throw const AppException(message: 'Store details are not available yet.');
   }
+
+  @override
+  Future<void> submitReview({
+    required String shopId,
+    required String requestId,
+    required int rating,
+    required String body,
+  }) async {
+    await _apiClient.post(
+      '/api/shops/$shopId/reviews',
+      body: {
+        'requestId': requestId,
+        'rating': rating,
+        'body': body,
+      },
+    );
+  }
 }

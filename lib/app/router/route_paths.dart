@@ -14,6 +14,13 @@ abstract final class RoutePaths {
   static const chats = '/customer/chats';
   static const chatDetail = '/customer/chats/detail';
   static const profile = '/customer/profile';
+  static const editProfile = '/customer/profile/edit';
+  static const savedAddresses = '/customer/profile/addresses';
+  static const myReviews = '/customer/profile/reviews';
+  static const notificationSettings = '/customer/profile/notifications';
+  static const requestDefaults = '/customer/profile/request-defaults';
+  static const helpSupport = '/customer/profile/help';
+  static const termsConditions = '/customer/profile/terms';
   static const storeDetails = '/customer/shops/:shopId';
   static const legacyStoreDetails = '/stores/fashion-hub-kathmandu';
   static const shopDashboard = '/shop/dashboard';

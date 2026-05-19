@@ -1,8 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grabbit/core/network/api_client.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:grabbit/features/chat/data/repositories/chat_repository.dart';
+import 'package:grabbit/features/chat/domain/entities/chat_message.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+
+final incomingMessageProvider = StateProvider<ChatMessage?>((ref) => null);
 
 final realtimeConnectionProvider = Provider<void>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -28,11 +32,19 @@ final realtimeConnectionProvider = Provider<void>((ref) {
     ref.invalidate(requestResponsesProvider);
   }
 
+  void handleIncomingMessage(dynamic data) {
+    if (data is! Map) return;
+    final map = Map<String, dynamic>.from(data);
+    ref.read(incomingMessageProvider.notifier).state = ChatMessage.fromMap(map);
+    ref.invalidate(chatThreadsProvider);
+  }
+
   socket
     ..on('request:created', refreshRequests)
     ..on('response:created', refreshRequests)
     ..on('response:updated', refreshRequests)
     ..on('request:updated', refreshRequests)
+    ..on('message:new', handleIncomingMessage)
     ..connect();
 
   ref.onDispose(() {
@@ -41,6 +53,7 @@ final realtimeConnectionProvider = Provider<void>((ref) {
       ..off('response:created')
       ..off('response:updated')
       ..off('request:updated')
+      ..off('message:new')
       ..dispose();
   });
 });

@@ -1,6 +1,7 @@
 const express = require("express");
 const CustomerRequest = require("../models/customer_request");
 const ShopProfile = require("../models/shop_profile");
+const ShopReview = require("../models/shop_review");
 const ShopResponse = require("../models/shop_response");
 const { auth, requireRole } = require("../middleware/auth");
 
@@ -27,6 +28,19 @@ function formatAgo(date) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
+function reviewDto(review) {
+  const customer = review.customerId;
+  const name = customer?.name || "Customer";
+  return {
+    id: review._id.toString(),
+    initials: initialsFor(name),
+    name,
+    rating: review.rating,
+    timeAgo: formatAgo(review.createdAt),
+    body: review.body || "",
+  };
+}
+
 function budgetText(request) {
   if (request.budgetMin != null && request.budgetMax != null) {
     return `Rs. ${request.budgetMin}-${request.budgetMax}`;
@@ -39,6 +53,7 @@ function budgetText(request) {
 function shopRequestDto(request, response) {
   return {
     id: request._id.toString(),
+    customerId: request.customerId?.toString() || "",
     title: request.title,
     subtitle: request.description || `${request.category} request`,
     description: request.description || "",
@@ -118,17 +133,18 @@ function profileUpdateFromBody(reqBody) {
 }
 
 function publicShopDetails(profile) {
+  const hasReviews = (profile.reviewCount || 0) > 0;
   return {
     id: profile._id.toString(),
     name: profile.businessName,
-    rating: String(profile.rating || 4.8),
+    rating: hasReviews ? Number(profile.rating || 0).toFixed(1) : "No ratings yet",
     reviewCount: `${profile.reviewCount || 0} reviews`,
     distance: "Nearby",
     openStatus: profile.openStatus || "Hours unavailable",
     closingTime: profile.closingTime || "",
     description: profile.description,
     specialties: profile.specialties || [],
-    reviews: [],
+    reviews: profile.reviews || [],
     activities: [],
     typicalResponseTime: profile.typicalResponseTime || "Not available",
     address: profile.addressText,
@@ -138,6 +154,20 @@ function publicShopDetails(profile) {
     latitude: profile.latitude,
     longitude: profile.longitude,
   };
+}
+
+async function recalculateShopRating(profileId) {
+  const reviews = await ShopReview.find({ shopProfileId: profileId });
+  const reviewCount = reviews.length;
+  const rating =
+    reviewCount === 0
+      ? 0
+      : reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount;
+
+  await ShopProfile.findByIdAndUpdate(profileId, {
+    rating,
+    reviewCount,
+  });
 }
 
 shopRouter.get(
@@ -240,10 +270,82 @@ shopRouter.get("/api/shops/:shopId", async (req, res) => {
         .json({ msg: "Store details are not available yet." });
     }
 
-    return res.json({ shop: publicShopDetails(profile) });
+    const reviews = await ShopReview.find({ shopProfileId: profile._id })
+      .populate("customerId")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    return res.json({
+      shop: publicShopDetails({
+        ...profile.toObject(),
+        _id: profile._id,
+        reviews: reviews.map(reviewDto),
+      }),
+    });
   } catch (error) {
     return res.status(500).json({ err: error.message });
   }
 });
+
+shopRouter.post(
+  "/api/shops/:shopId/reviews",
+  auth,
+  requireRole("customer"),
+  async (req, res) => {
+    try {
+      const { requestId, rating, body = "" } = req.body;
+      const numericRating = Number(rating);
+
+      if (!requestId || !Number.isInteger(numericRating)) {
+        return res.status(400).json({ msg: "Request id and rating are required." });
+      }
+      if (numericRating < 1 || numericRating > 5) {
+        return res.status(400).json({ msg: "Rating must be between 1 and 5." });
+      }
+
+      const profile = await ShopProfile.findById(req.params.shopId);
+      if (!profile) {
+        return res.status(404).json({ msg: "Shop not found." });
+      }
+
+      const request = await CustomerRequest.findById(requestId);
+      if (!request || request.customerId.toString() !== req.user.userId) {
+        return res.status(404).json({ msg: "Request not found." });
+      }
+      if (
+        request.status !== "completed" ||
+        request.purchasedShopUserId?.toString() !== profile.userId.toString()
+      ) {
+        return res
+          .status(403)
+          .json({ msg: "Rate the shop after marking a purchase complete." });
+      }
+
+      const review = await ShopReview.create({
+        shopProfileId: profile._id,
+        shopUserId: profile.userId,
+        customerId: req.user.userId,
+        requestId,
+        rating: numericRating,
+        body,
+      });
+
+      await recalculateShopRating(profile._id);
+      const populated = await ShopReview.findById(review._id).populate("customerId");
+      const updatedProfile = await ShopProfile.findById(profile._id);
+
+      return res.status(201).json({
+        review: reviewDto(populated),
+        rating: Number(updatedProfile.rating || 0).toFixed(1),
+        reviewCount: updatedProfile.reviewCount || 0,
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        return res.status(400).json({ msg: "You already rated this purchase." });
+      }
+      return res.status(500).json({ err: error.message });
+    }
+  }
+);
 
 module.exports = shopRouter;

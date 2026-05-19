@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
@@ -37,7 +38,17 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
   final _budgetMaxController = TextEditingController();
   String? _category;
   String _urgency = 'need_soon';
+  String _locationText = 'Finding your current location...';
+  double? _latitude;
+  double? _longitude;
+  bool _isLocating = false;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _useCurrentLocation();
+  }
 
   @override
   void dispose() {
@@ -64,7 +75,9 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
               category: _category!,
               quantity: _quantityController.text.trim(),
               urgency: _urgency,
-              locationText: 'Kathmandu, New Baneshwor',
+              locationText: _locationText,
+              latitude: _latitude,
+              longitude: _longitude,
               budgetMin: _parseBudget(_budgetMinController.text),
               budgetMax: _parseBudget(_budgetMaxController.text),
             ),
@@ -96,6 +109,65 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
     return int.tryParse(trimmed);
+  }
+
+  Future<void> _useCurrentLocation() async {
+    setState(() {
+      _isLocating = true;
+      _locationText = 'Finding your current location...';
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _latitude = null;
+          _longitude = null;
+          _locationText = 'Current location unavailable';
+        });
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _latitude = null;
+          _longitude = null;
+          _locationText = 'Current location unavailable';
+        });
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _locationText = 'Current location';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _latitude = null;
+        _longitude = null;
+        _locationText = 'Current location unavailable';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLocating = false;
+        });
+      }
+    }
   }
 
   Widget _fieldLabel(String label, {bool required = false}) {
@@ -304,25 +376,30 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
                           size: 20,
                         ),
                         const SizedBox(width: 10),
-                        Text(
-                          'Kathmandu, New Baneshwor',
-                          style: tt.bodyLarge,
+                        Expanded(
+                          child: Text(_locationText, style: tt.bodyLarge),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: _isLocating ? null : _useCurrentLocation,
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.my_location_rounded,
+                          Icon(
+                            _latitude != null && _longitude != null
+                                ? Icons.my_location_rounded
+                                : Icons.location_searching_rounded,
                             color: AppColors.primary,
                             size: 16,
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Using current location',
+                            _isLocating
+                                ? 'Locating...'
+                                : _latitude != null && _longitude != null
+                                    ? 'Using current location'
+                                    : 'Use current location',
                             style: tt.bodySmall?.copyWith(
                               color: AppColors.primaryDark,
                               fontWeight: FontWeight.w700,

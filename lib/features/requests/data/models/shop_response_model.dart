@@ -10,11 +10,13 @@ class ShopResponseModel extends ShopResponse {
     required super.reviews,
     required super.message,
     required super.price,
+    super.shopUserId,
   });
 
   factory ShopResponseModel.fromMap(Map<String, dynamic> map) {
     return ShopResponseModel(
       shopId: map['shopId'] as String? ?? '',
+      shopUserId: map['shopUserId'] as String? ?? '',
       name: map['name'] as String? ?? 'Shop',
       distance: map['distance'] as String? ?? 'Nearby',
       respondedAgo: map['respondedAgo'] as String? ?? '',

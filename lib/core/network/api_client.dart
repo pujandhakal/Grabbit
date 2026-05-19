@@ -99,6 +99,28 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    required Map<String, dynamic> body,
+  }) async {
+    late http.Response response;
+
+    try {
+      response = await client.delete(
+        Uri.parse('$baseUrl$path'),
+        headers: _headers,
+        body: jsonEncode(body),
+      );
+    } catch (_) {
+      throw const AppException(
+        message:
+            'Unable to reach the server. Check the API base URL and try again.',
+      );
+    }
+
+    return _handleResponse(response);
+  }
+
   Map<String, String> get _headers {
     return {
       'Content-Type': 'application/json; charset=UTF-8',

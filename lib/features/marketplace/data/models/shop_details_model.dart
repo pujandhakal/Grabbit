@@ -26,7 +26,7 @@ class ShopDetailsModel extends ShopDetails {
     return ShopDetailsModel(
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? 'Store',
-      rating: map['rating'] as String? ?? '4.8',
+      rating: map['rating'] as String? ?? 'No ratings yet',
       reviewCount: map['reviewCount'] as String? ?? '0 reviews',
       distance: map['distance'] as String? ?? 'Nearby',
       openStatus: map['openStatus'] as String? ?? 'Hours unavailable',
@@ -41,6 +41,7 @@ class ShopDetailsModel extends ShopDetails {
             (item) => StoreReview(
               initials: item['initials'] as String? ?? '',
               name: item['name'] as String? ?? '',
+              rating: (item['rating'] as num?)?.toInt() ?? 0,
               timeAgo: item['timeAgo'] as String? ?? '',
               body: item['body'] as String? ?? '',
             ),

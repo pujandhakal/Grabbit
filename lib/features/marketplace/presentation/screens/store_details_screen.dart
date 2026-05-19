@@ -196,8 +196,8 @@ class _CustomerReviewsCard extends StatelessWidget {
         children: [
           AppSectionHeader(
             title: 'Customer Reviews',
-            actionLabel: 'See All',
-            onActionTap: () {},
+            actionLabel: shop.reviews.isEmpty ? null : 'See All',
+            onActionTap: shop.reviews.isEmpty ? null : () {},
           ),
           const SizedBox(height: 14),
           Row(
@@ -217,23 +217,31 @@ class _CustomerReviewsCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(width: 22),
-              const Expanded(
-                child: Column(
-                  children: [
-                    _RatingBreakdown(stars: '5', percent: '85%'),
-                    SizedBox(height: 10),
-                    _RatingBreakdown(stars: '4', percent: '60%'),
-                  ],
+              if (shop.reviews.isNotEmpty) ...[
+                const SizedBox(width: 22),
+                const Expanded(
+                  child: Column(
+                    children: [
+                      _RatingBreakdown(stars: '5', percent: '85%'),
+                      SizedBox(height: 10),
+                      _RatingBreakdown(stars: '4', percent: '60%'),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 18),
-          for (var index = 0; index < shop.reviews.length; index++) ...[
-            if (index > 0) const Divider(height: 24),
-            _ReviewTile(review: shop.reviews[index]),
-          ],
+          if (shop.reviews.isEmpty)
+            Text(
+              'No customer ratings yet.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            )
+          else
+            for (var index = 0; index < shop.reviews.length; index++) ...[
+              if (index > 0) const Divider(height: 24),
+              _ReviewTile(review: shop.reviews[index]),
+            ],
         ],
       ),
     );
@@ -366,8 +374,7 @@ class _StoreBottomActions extends StatelessWidget {
       '&destination=${shop.latitude},${shop.longitude}'
       '&travelmode=driving',
     );
-    final launched =
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not open maps.')),
@@ -387,8 +394,7 @@ class _StoreBottomActions extends StatelessWidget {
     }
     final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
     final uri = Uri.parse('tel:$sanitized');
-    final launched =
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not open the dialer.')),
@@ -432,8 +438,9 @@ class _StoreBottomActions extends StatelessWidget {
                       ? 'Open directions in Google Maps'
                       : 'Location not set by shop',
                   child: OutlinedButton.icon(
-                    onPressed:
-                        shop.hasLocation ? () => _openDirections(context) : null,
+                    onPressed: shop.hasLocation
+                        ? () => _openDirections(context)
+                        : null,
                     icon: const Icon(Icons.directions_outlined),
                     label: const Text('Get Direction'),
                   ),
@@ -441,9 +448,7 @@ class _StoreBottomActions extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Tooltip(
-                message: shop.phone.trim().isEmpty
-                    ? 'Phone not shared by shop'
-                    : 'Call ${shop.phone}',
+                message: 'Contact Store',
                 child: FilledButton(
                   onPressed: shop.phone.trim().isEmpty
                       ? null
@@ -593,6 +598,19 @@ class _ReviewTile extends StatelessWidget {
                     review.timeAgo,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  for (var i = 0; i < 5; i++)
+                    Icon(
+                      i < review.rating
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
+                      size: 16,
+                      color: AppColors.accent,
+                    ),
                 ],
               ),
               const SizedBox(height: 6),

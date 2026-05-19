@@ -52,7 +52,7 @@ class ShopProfile {
       typicalResponseTime: map['typicalResponseTime'] as String? ?? '',
       landmark: map['landmark'] as String? ?? '',
       isVerified: map['isVerified'] as bool? ?? false,
-      rating: (map['rating'] as num?)?.toDouble() ?? 4.8,
+      rating: (map['rating'] as num?)?.toDouble() ?? 0,
       reviewCount: (map['reviewCount'] as num?)?.toInt() ?? 0,
       latitude: (map['latitude'] as num?)?.toDouble(),
       longitude: (map['longitude'] as num?)?.toDouble(),

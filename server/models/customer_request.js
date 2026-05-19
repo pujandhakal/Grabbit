@@ -37,6 +37,14 @@ const customerRequestSchema = mongoose.Schema(
       trim: true,
       default: "Kathmandu, New Baneshwor",
     },
+    latitude: {
+      type: Number,
+      default: null,
+    },
+    longitude: {
+      type: Number,
+      default: null,
+    },
     budgetMin: {
       type: Number,
     },
@@ -51,6 +59,11 @@ const customerRequestSchema = mongoose.Schema(
     responseCount: {
       type: Number,
       default: 0,
+    },
+    purchasedShopUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   { timestamps: true }

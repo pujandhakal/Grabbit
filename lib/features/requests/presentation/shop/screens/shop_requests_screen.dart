@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
-import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
@@ -55,34 +54,115 @@ class ShopRequestsScreen extends ConsumerWidget {
               .where((request) => request.hasResponded)
               .toList(growable: false);
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              if (pendingRequests.isNotEmpty) ...[
-                AppSectionHeader(
-                  title: 'Needs response (${pendingRequests.length})',
-                ),
-                const SizedBox(height: 12),
-                for (final item in pendingRequests) ...[
-                  _IncomingRequestCard(request: item),
-                  const SizedBox(height: 12),
-                ],
-              ],
-              if (respondedRequests.isNotEmpty) ...[
-                if (pendingRequests.isNotEmpty) const SizedBox(height: 8),
-                AppSectionHeader(
-                  title: 'Already responded (${respondedRequests.length})',
-                ),
-                const SizedBox(height: 12),
-                for (final item in respondedRequests) ...[
-                  _IncomingRequestCard(request: item),
-                  const SizedBox(height: 12),
-                ],
-              ],
-            ],
+          return _IncomingRequestsTabs(
+            pendingRequests: pendingRequests,
+            respondedRequests: respondedRequests,
           );
         },
       ),
+    );
+  }
+}
+
+class _IncomingRequestsTabs extends StatelessWidget {
+  const _IncomingRequestsTabs({
+    required this.pendingRequests,
+    required this.respondedRequests,
+  });
+
+  final List<ShopRequest> pendingRequests;
+  final List<ShopRequest> respondedRequests;
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: AppSurfaceCard(
+              padding: const EdgeInsets.all(6),
+              radius: 22,
+              child: TabBar(
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: AppColors.textMuted,
+                labelStyle: Theme.of(context).textTheme.titleSmall,
+                unselectedLabelStyle: Theme.of(context).textTheme.titleSmall,
+                indicator: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                tabs: [
+                  Tab(
+                    child: FittedBox(
+                      child: Text('Needs Response (${pendingRequests.length})'),
+                    ),
+                  ),
+                  Tab(
+                    child: FittedBox(
+                      child: Text(
+                        'Already Responded (${respondedRequests.length})',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _RequestsTabList(
+                  requests: pendingRequests,
+                  emptyMessage: 'No requests need a response right now.',
+                ),
+                _RequestsTabList(
+                  requests: respondedRequests,
+                  emptyMessage: 'Responses you send will appear here.',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RequestsTabList extends StatelessWidget {
+  const _RequestsTabList({
+    required this.requests,
+    required this.emptyMessage,
+  });
+
+  final List<ShopRequest> requests;
+  final String emptyMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    if (requests.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            emptyMessage,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      itemCount: requests.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        return _IncomingRequestCard(request: requests[index]);
+      },
     );
   }
 }

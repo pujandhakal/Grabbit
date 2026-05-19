@@ -6,14 +6,17 @@ import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
-import 'package:grabbit/core/widgets/app_primary_button.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
+import 'package:grabbit/features/profile/presentation/widgets/delete_account_sheet.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 import 'package:latlong2/latlong.dart';
+
+const _dangerColor = Color(0xFFE5484D);
+const _dangerSoftColor = Color(0xFFFFECEE);
 
 const _categories = [
   'Groceries',
@@ -144,6 +147,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
       setState(() {
         controller.text = result;
       });
+      await _save();
     }
   }
 
@@ -169,6 +173,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
       setState(() {
         controller.text = result;
       });
+      await _save();
     }
   }
 
@@ -193,6 +198,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
     );
     if (result != null) {
       setState(() => onPicked(result));
+      await _save();
     }
   }
 
@@ -217,6 +223,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
     );
     if (result != null) {
       setState(() => onSaved(result));
+      await _save();
     }
   }
 
@@ -238,6 +245,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
         _latitude = result.$1;
         _longitude = result.$2;
       });
+      await _save();
     }
   }
 
@@ -245,11 +253,15 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
   Widget build(BuildContext context) {
     final profile = ref.watch(shopProfileProvider);
 
+    final isVerified = profile.valueOrNull?.isVerified ?? false;
+
     return AppStickyPage(
       bottomSafeArea: true,
-      header: const AppScreenHeader(
-        title: 'Verify Your Store',
-        subtitle: 'Complete public details customers see after View Store.',
+      header: AppScreenHeader(
+        title: isVerified ? 'Store Profile' : 'Verify Your Store',
+        subtitle: isVerified
+            ? 'Manage the public details customers see after View Store.'
+            : 'Complete public details customers see after View Store.',
       ),
       child: profile.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -441,13 +453,28 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              AppPrimaryButton(
-                label: 'Save & Verify Store',
-                isLoading: _saving,
-                onPressed: _save,
+              const SizedBox(height: 20),
+              const _SectionTitle('Danger Zone'),
+              const SizedBox(height: 8),
+              _SettingsGroup(
+                rows: [
+                  _SettingsRow(
+                    icon: Icons.delete_forever_rounded,
+                    label: 'Delete Account',
+                    value: 'Permanently remove this shop account',
+                    iconColor: _dangerColor,
+                    iconBackgroundColor: _dangerSoftColor,
+                    labelColor: _dangerColor,
+                    onTap: () => showDeleteAccountSheet(context),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
+              if (_saving) ...[
+                const SizedBox(height: 24),
+                const Center(child: CircularProgressIndicator()),
+                const SizedBox(height: 12),
+              ] else
+                const SizedBox(height: 24),
               OutlinedButton.icon(
                 onPressed: () async {
                   await ref.read(authControllerProvider.notifier).logout();
@@ -569,6 +596,8 @@ class _SettingsRow extends StatelessWidget {
     required this.value,
     required this.onTap,
     this.iconColor,
+    this.iconBackgroundColor,
+    this.labelColor,
   });
 
   final IconData icon;
@@ -576,6 +605,8 @@ class _SettingsRow extends StatelessWidget {
   final String value;
   final VoidCallback onTap;
   final Color? iconColor;
+  final Color? iconBackgroundColor;
+  final Color? labelColor;
 
   @override
   Widget build(BuildContext context) {
@@ -593,7 +624,7 @@ class _SettingsRow extends StatelessWidget {
               height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.primarySoft,
+                color: iconBackgroundColor ?? AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -607,16 +638,20 @@ class _SettingsRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: theme.textTheme.titleSmall),
+                  Text(
+                    label,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: labelColor,
+                    ),
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isPlaceholder
-                          ? AppColors.textMuted
-                          : AppColors.text,
+                      color:
+                          isPlaceholder ? AppColors.textMuted : AppColors.text,
                     ),
                   ),
                 ],
@@ -697,9 +732,8 @@ class _EditSheet extends StatelessWidget {
       top: false,
       child: Padding(
         padding: EdgeInsets.only(bottom: viewInsets.bottom),
-        child: height != null
-            ? SizedBox(height: height, child: content)
-            : content,
+        child:
+            height != null ? SizedBox(height: height, child: content) : content,
       ),
     );
   }
@@ -845,9 +879,8 @@ class _ChoiceSheetState extends State<_ChoiceSheet> {
                 option == _value
                     ? Icons.check_circle_rounded
                     : Icons.radio_button_unchecked_rounded,
-                color: option == _value
-                    ? AppColors.primary
-                    : AppColors.textMuted,
+                color:
+                    option == _value ? AppColors.primary : AppColors.textMuted,
               ),
               onTap: () => setState(() {
                 _value = option;
@@ -973,7 +1006,8 @@ class _MapPickerSheetState extends State<_MapPickerSheet> {
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied) {
-        _setStatus('Location permission was denied. Tap the button again to ask once more.');
+        _setStatus(
+            'Location permission was denied. Tap the button again to ask once more.');
         return;
       }
       if (permission == LocationPermission.deniedForever) {
@@ -1014,8 +1048,7 @@ class _MapPickerSheetState extends State<_MapPickerSheet> {
     return _EditSheet(
       title: 'Pin on map',
       height: screenHeight * 0.85,
-      onSave:
-          hasPin ? () => Navigator.of(context).pop((_lat!, _lng!)) : null,
+      onSave: hasPin ? () => Navigator.of(context).pop((_lat!, _lng!)) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1030,9 +1063,8 @@ class _MapPickerSheetState extends State<_MapPickerSheet> {
               child: FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
-                  initialCenter: hasPin
-                      ? LatLng(_lat!, _lng!)
-                      : _kathmanduCenter,
+                  initialCenter:
+                      hasPin ? LatLng(_lat!, _lng!) : _kathmanduCenter,
                   initialZoom: 15,
                   onTap: (tapPosition, latLng) {
                     setState(() {
@@ -1102,4 +1134,3 @@ class _MapPickerSheetState extends State<_MapPickerSheet> {
     );
   }
 }
-

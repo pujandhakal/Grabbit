@@ -57,6 +57,34 @@ class MockRequestsRepository implements RequestsRepository {
   }
 
   @override
+  Future<RequestSummary> completeRequestPurchase({
+    required String requestId,
+    required String shopUserId,
+  }) async {
+    for (final request in _requests) {
+      if (request.id == requestId) {
+        return RequestSummary(
+          id: request.id,
+          title: request.title,
+          subtitle: request.subtitle,
+          status: RequestStatus.completed,
+          time: request.time,
+          responseText: 'Completed',
+          category: request.category,
+          postedAt: request.postedAt,
+          description: request.description,
+          quantity: request.quantity,
+          urgency: request.urgency,
+          locationText: request.locationText,
+          budgetText: request.budgetText,
+          customerName: request.customerName,
+        );
+      }
+    }
+    throw const AppException(message: 'Request not found.');
+  }
+
+  @override
   Future<List<ShopRequest>> fetchShopRequests() async {
     return const [
       ShopRequest(

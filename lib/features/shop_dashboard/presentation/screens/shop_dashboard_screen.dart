@@ -9,26 +9,35 @@ import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_soft_background.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
+import 'package:grabbit/features/chat/data/repositories/chat_repository.dart';
 import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
+import 'package:grabbit/features/profile/domain/entities/shop_profile.dart';
+import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 
-class ShopDashboardScreen extends ConsumerStatefulWidget {
+class ShopDashboardScreen extends ConsumerWidget {
   const ShopDashboardScreen({super.key});
-
-  @override
-  ConsumerState<ShopDashboardScreen> createState() =>
-      _ShopDashboardScreenState();
-}
-
-class _ShopDashboardScreenState extends ConsumerState<ShopDashboardScreen> {
-  bool _showOnlyNew = true;
 
   static const double _expandedHeight = 140;
   static const double _collapsedHeight = 72;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final topInset = MediaQuery.of(context).padding.top;
-    final shopProfile = ref.watch(shopProfileProvider);
+    final profileAsync = ref.watch(shopProfileProvider);
+    final requestsAsync = ref.watch(shopRequestsProvider);
+    final chatsAsync = ref.watch(chatThreadsProvider);
+    final profile = profileAsync.valueOrNull;
+
+    final pendingCount = requestsAsync.valueOrNull
+        ?.where((request) => !request.hasResponded)
+        .length;
+    final respondedCount = requestsAsync.valueOrNull
+        ?.where((request) => request.hasResponded)
+        .length;
+    final unreadChatCount = chatsAsync.valueOrNull?.fold<int>(
+      0,
+      (total, thread) => total + thread.unreadCount,
+    );
 
     return AppSoftBackground(
       child: CustomScrollView(
@@ -49,7 +58,10 @@ class _ShopDashboardScreenState extends ConsumerState<ShopDashboardScreen> {
                 final t = ((constraints.maxHeight - minHeight) /
                         (maxHeight - minHeight))
                     .clamp(0.0, 1.0);
-                return _CollapsibleShopHeader(t: t, topInset: topInset);
+                return _CollapsibleShopHeader(
+                  t: t,
+                  profile: profile,
+                );
               },
             ),
           ),
@@ -57,64 +69,26 @@ class _ShopDashboardScreenState extends ConsumerState<ShopDashboardScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate.fixed([
-                if (shopProfile.valueOrNull?.isVerified == false) ...[
-                  const _VerifyStoreCard(),
-                  const SizedBox(height: 16),
-                ],
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.18,
-                  children: const [
-                    _MetricCard(
-                      title: 'New Requests Near You',
-                      value: '12',
-                      caption: '2 urgent',
-                      icon: Icons.near_me_outlined,
-                      tone: AppStatusTone.primary,
-                    ),
-                    _MetricCard(
-                      title: 'Responses Sent',
-                      value: '28',
-                      caption: '+5 today',
-                      icon: Icons.send_outlined,
-                      tone: AppStatusTone.blue,
-                    ),
-                    _MetricCard(
-                      title: 'Pending Conversations',
-                      value: '7',
-                      caption: 'Inbox',
-                      icon: Icons.mark_chat_unread_outlined,
-                      tone: AppStatusTone.accent,
-                    ),
-                    _MetricCard(
-                      title: 'Shop Rating',
-                      value: '4.8',
-                      caption: '127 reviews',
-                      icon: Icons.star_border_rounded,
-                      tone: AppStatusTone.neutral,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _FilterCard(
-                  showOnlyNew: _showOnlyNew,
-                  onShowOnlyNewChanged: (value) {
-                    setState(() {
-                      _showOnlyNew = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 20),
-                const AppSectionHeader(title: '5 Requests Near You'),
+                _StoreStatusCard(profileAsync: profileAsync),
+                const SizedBox(height: 18),
+                const AppSectionHeader(title: 'Today at a glance'),
                 const SizedBox(height: 12),
-                for (final request in _nearbyRequests) ...[
-                  _RequestOpportunityCard(request: request),
-                  const SizedBox(height: 12),
-                ],
+                _MetricsGrid(
+                  profile: profile,
+                  pendingCount: pendingCount,
+                  respondedCount: respondedCount,
+                  unreadChatCount: unreadChatCount,
+                ),
+                const SizedBox(height: 18),
+                _NextActionCard(
+                  isVerified: profile?.isVerified ?? false,
+                  pendingCount: pendingCount,
+                  unreadChatCount: unreadChatCount,
+                ),
+                const SizedBox(height: 18),
+                const AppSectionHeader(title: 'Quick actions'),
+                const SizedBox(height: 12),
+                const _QuickActionsCard(),
               ]),
             ),
           ),
@@ -124,54 +98,14 @@ class _ShopDashboardScreenState extends ConsumerState<ShopDashboardScreen> {
   }
 }
 
-class _VerifyStoreCard extends StatelessWidget {
-  const _VerifyStoreCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSurfaceCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const AppIconBadge(
-            icon: Icons.verified_outlined,
-            backgroundColor: AppColors.accentSoft,
-            foregroundColor: AppColors.accent,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Verify your store',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Complete public store details so customers can view your store after you respond.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: () => context.go(RoutePaths.shopProfile),
-                  icon: const Icon(Icons.storefront_outlined),
-                  label: const Text('Complete Details'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CollapsibleShopHeader extends StatelessWidget {
-  const _CollapsibleShopHeader({required this.t, required this.topInset});
+  const _CollapsibleShopHeader({
+    required this.t,
+    required this.profile,
+  });
 
   final double t;
-  final double topInset;
+  final ShopProfile? profile;
 
   @override
   Widget build(BuildContext context) {
@@ -179,6 +113,11 @@ class _CollapsibleShopHeader extends StatelessWidget {
     final subtitleGap = lerpDouble(0, 4, t)!;
     final chipsGap = lerpDouble(0, 10, t)!;
     final alignY = lerpDouble(0, 1, t)!;
+    final shopName = profile?.businessName ?? 'My Shop';
+    final initials = profile?.initials ?? 'MS';
+    final categoryText = profile?.categories.isNotEmpty == true
+        ? profile!.categories.take(2).join(' & ')
+        : 'Set up your store categories';
 
     return SafeArea(
       bottom: false,
@@ -196,7 +135,7 @@ class _CollapsibleShopHeader extends StatelessWidget {
                     radius: avatarRadius,
                     backgroundColor: AppColors.primarySoft,
                     child: Text(
-                      'KE',
+                      initials,
                       style: TextStyle(
                         color: AppColors.primaryDark,
                         fontWeight: FontWeight.w800,
@@ -215,17 +154,18 @@ class _CollapsibleShopHeader extends StatelessWidget {
                           width: 22,
                           height: 22,
                           alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            color: AppColors.accent,
+                          decoration: BoxDecoration(
+                            color: profile?.isVerified == true
+                                ? AppColors.primary
+                                : AppColors.accent,
                             shape: BoxShape.circle,
                           ),
-                          child: Text(
-                            '3',
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                          child: Icon(
+                            profile?.isVerified == true
+                                ? Icons.check_rounded
+                                : Icons.priority_high_rounded,
+                            color: Colors.white,
+                            size: 14,
                           ),
                         ),
                       ),
@@ -240,7 +180,7 @@ class _CollapsibleShopHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kathmandu Electronics',
+                      shopName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge,
@@ -253,7 +193,9 @@ class _CollapsibleShopHeader extends StatelessWidget {
                         child: Opacity(
                           opacity: t,
                           child: Text(
-                            'Connect with customers near you',
+                            categoryText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
@@ -266,15 +208,20 @@ class _CollapsibleShopHeader extends StatelessWidget {
                         heightFactor: t,
                         child: Opacity(
                           opacity: t,
-                          child: const Wrap(
+                          child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              AppStatusChip(label: '+3 today'),
                               AppStatusChip(
-                                label: '+5 today',
-                                tone: AppStatusTone.blue,
+                                label: profile?.isVerified == true
+                                    ? 'Verified'
+                                    : 'Needs setup',
                               ),
+                              if ((profile?.openStatus ?? '').isNotEmpty)
+                                AppStatusChip(
+                                  label: profile!.openStatus,
+                                  tone: AppStatusTone.blue,
+                                ),
                             ],
                           ),
                         ),
@@ -291,150 +238,69 @@ class _CollapsibleShopHeader extends StatelessWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.caption,
-    required this.icon,
-    required this.tone,
-  });
+class _StoreStatusCard extends StatelessWidget {
+  const _StoreStatusCard({required this.profileAsync});
 
-  final String title;
-  final String value;
-  final String caption;
-  final IconData icon;
-  final AppStatusTone tone;
+  final AsyncValue<ShopProfile> profileAsync;
 
   @override
   Widget build(BuildContext context) {
+    final profile = profileAsync.valueOrNull;
+    final isVerified = profile?.isVerified ?? false;
+    final title = isVerified ? 'Store is visible' : 'Verify Your Store';
+    final body = isVerified
+        ? 'Customers can view your public store details after you respond.'
+        : 'Complete your public store details so customers can trust your responses.';
+
     return AppSurfaceCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ToneIcon(icon: icon, tone: tone, size: 32),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 1),
-          Text(caption, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterCard extends StatelessWidget {
-  const _FilterCard({
-    required this.showOnlyNew,
-    required this.onShowOnlyNewChanged,
-  });
-
-  final bool showOnlyNew;
-  final ValueChanged<bool> onShowOnlyNewChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Filter & Sort Requests',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              TextButton(
-                onPressed: () => onShowOnlyNewChanged(false),
-                child: const Text('Clear All'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: const [
-              Expanded(
-                child: _FilterField(
-                  label: 'Category',
-                  value: 'All Categories',
-                  icon: Icons.category_outlined,
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _FilterField(
-                  label: 'Sort By',
-                  value: 'Nearest First',
-                  icon: Icons.sort_rounded,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SwitchListTile.adaptive(
-            value: showOnlyNew,
-            onChanged: onShowOnlyNewChanged,
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              'Show only new requests',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            subtitle: Text(
-              'Focus on fresh opportunities',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterField extends StatelessWidget {
-  const _FilterField({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.cardSoft,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.outline),
-      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppColors.textMuted),
-          const SizedBox(width: 8),
+          AppIconBadge(
+            icon: isVerified
+                ? Icons.storefront_outlined
+                : Icons.verified_outlined,
+            backgroundColor:
+                isVerified ? AppColors.primarySoft : AppColors.accentSoft,
+            foregroundColor:
+                isVerified ? AppColors.primaryDark : AppColors.accent,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    AppStatusChip(
+                      label: isVerified ? 'Verified' : 'Incomplete',
+                      tone: isVerified
+                          ? AppStatusTone.primary
+                          : AppStatusTone.accent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(body, style: Theme.of(context).textTheme.bodyMedium),
+                if (profileAsync.isLoading) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Checking store status...',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => context.go(RoutePaths.shopProfile),
+                  icon: const Icon(Icons.storefront_outlined),
+                  label: Text(isVerified ? 'Manage Store' : 'Complete Details'),
                 ),
               ],
             ),
@@ -445,84 +311,287 @@ class _FilterField extends StatelessWidget {
   }
 }
 
-class _RequestOpportunityCard extends StatelessWidget {
-  const _RequestOpportunityCard({required this.request});
+class _MetricsGrid extends StatelessWidget {
+  const _MetricsGrid({
+    required this.profile,
+    required this.pendingCount,
+    required this.respondedCount,
+    required this.unreadChatCount,
+  });
 
-  final _DashboardRequest request;
+  final ShopProfile? profile;
+  final int? pendingCount;
+  final int? respondedCount;
+  final int? unreadChatCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.18,
+      children: [
+        _MetricCard(
+          title: 'Needs Response',
+          value: _countLabel(pendingCount),
+          caption: 'Open incoming tab',
+          icon: Icons.near_me_outlined,
+          tone: AppStatusTone.primary,
+          onTap: () => context.go(RoutePaths.shopRequests),
+        ),
+        _MetricCard(
+          title: 'Active Responses',
+          value: _countLabel(respondedCount),
+          caption: 'Offers sent',
+          icon: Icons.send_outlined,
+          tone: AppStatusTone.blue,
+          onTap: () => context.go(RoutePaths.shopRequests),
+        ),
+        _MetricCard(
+          title: 'Unread Chats',
+          value: _countLabel(unreadChatCount),
+          caption: 'Customer replies',
+          icon: Icons.mark_chat_unread_outlined,
+          tone: AppStatusTone.accent,
+          onTap: () => context.go(RoutePaths.shopChats),
+        ),
+        _MetricCard(
+          title: 'Shop Rating',
+          value: profile == null
+              ? '-'
+              : profile!.reviewCount == 0
+                  ? '-'
+                  : profile!.rating.toStringAsFixed(1),
+          caption: profile == null
+              ? 'Loading reviews'
+              : profile!.reviewCount == 0
+                  ? 'No ratings yet'
+                  : '${profile!.reviewCount} reviews',
+          icon: Icons.star_border_rounded,
+          tone: AppStatusTone.neutral,
+          onTap: () => context.go(RoutePaths.shopProfile),
+        ),
+      ],
+    );
+  }
+
+  String _countLabel(int? count) {
+    return count == null ? '-' : count.toString();
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.title,
+    required this.value,
+    required this.caption,
+    required this.icon,
+    required this.tone,
+    required this.onTap,
+  });
+
+  final String title;
+  final String value;
+  final String caption;
+  final IconData icon;
+  final AppStatusTone tone;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return AppSurfaceCard(
-      child: Column(
+      padding: EdgeInsets.zero,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(28),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(28),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ToneIcon(icon: icon, tone: tone, size: 32),
+                const SizedBox(height: 6),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 4),
+                Text(value, style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 1),
+                Text(
+                  caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NextActionCard extends StatelessWidget {
+  const _NextActionCard({
+    required this.isVerified,
+    required this.pendingCount,
+    required this.unreadChatCount,
+  });
+
+  final bool isVerified;
+  final int? pendingCount;
+  final int? unreadChatCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final action = _nextAction();
+
+    return AppSurfaceCard(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  request.title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  if (request.isNew) const AppStatusChip(label: 'New'),
-                  if (request.isUrgent)
-                    const AppStatusChip(
-                      label: 'Urgent',
-                      tone: AppStatusTone.accent,
-                    ),
-                ],
-              ),
-            ],
+          AppIconBadge(
+            icon: action.icon,
+            backgroundColor: action.tone == AppStatusTone.accent
+                ? AppColors.accentSoft
+                : AppColors.primarySoft,
+            foregroundColor: action.tone == AppStatusTone.accent
+                ? AppColors.accent
+                : AppColors.primaryDark,
           ),
-          const SizedBox(height: 4),
-          Text(
-            'by ${request.customerName}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 10),
-          Text(request.description,
-              style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              _RequestMeta(icon: Icons.place_outlined, label: request.distance),
-              _RequestMeta(icon: Icons.schedule_rounded, label: request.age),
-              _RequestMeta(
-                icon: Icons.payments_outlined,
-                label: request.budget,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => context.push(
-                    RoutePaths.shopRequestDetailPath(request.id),
-                  ),
-                  icon: const Icon(Icons.reply_outlined, size: 18),
-                  label: const Text('Respond'),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(action.title,
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 6),
+                Text(action.body,
+                    style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => context.go(action.route),
+                  icon: Icon(action.buttonIcon),
+                  label: Text(action.buttonLabel),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => context.push(
-                    RoutePaths.shopRequestDetailPath(request.id),
-                  ),
-                  icon: const Icon(Icons.visibility_outlined, size: 18),
-                  label: const Text('View Details'),
-                ),
-              ),
-            ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _DashboardAction _nextAction() {
+    if (!isVerified) {
+      return const _DashboardAction(
+        title: 'Complete your store profile',
+        body:
+            'Verified store details make your responses more useful to customers.',
+        buttonLabel: 'Verify Store',
+        route: RoutePaths.shopProfile,
+        icon: Icons.verified_outlined,
+        buttonIcon: Icons.storefront_outlined,
+        tone: AppStatusTone.accent,
+      );
+    }
+
+    if ((pendingCount ?? 0) > 0) {
+      return _DashboardAction(
+        title: '${pendingCount ?? 0} requests need attention',
+        body:
+            'Open Incoming Requests to respond while the opportunity is fresh.',
+        buttonLabel: 'Review Requests',
+        route: RoutePaths.shopRequests,
+        icon: Icons.reply_outlined,
+        buttonIcon: Icons.near_me_outlined,
+        tone: AppStatusTone.primary,
+      );
+    }
+
+    if ((unreadChatCount ?? 0) > 0) {
+      return _DashboardAction(
+        title: '${unreadChatCount ?? 0} unread customer messages',
+        body: 'Customers are waiting for your reply in Shop Chats.',
+        buttonLabel: 'Open Chats',
+        route: RoutePaths.shopChats,
+        icon: Icons.chat_bubble_outline_rounded,
+        buttonIcon: Icons.mark_chat_unread_outlined,
+        tone: AppStatusTone.primary,
+      );
+    }
+
+    return const _DashboardAction(
+      title: 'You are caught up',
+      body: 'No pending requests or unread chats right now.',
+      buttonLabel: 'View Requests',
+      route: RoutePaths.shopRequests,
+      icon: Icons.check_circle_outline_rounded,
+      buttonIcon: Icons.near_me_outlined,
+      tone: AppStatusTone.primary,
+    );
+  }
+}
+
+class _DashboardAction {
+  const _DashboardAction({
+    required this.title,
+    required this.body,
+    required this.buttonLabel,
+    required this.route,
+    required this.icon,
+    required this.buttonIcon,
+    required this.tone,
+  });
+
+  final String title;
+  final String body;
+  final String buttonLabel;
+  final String route;
+  final IconData icon;
+  final IconData buttonIcon;
+  final AppStatusTone tone;
+}
+
+class _QuickActionsCard extends StatelessWidget {
+  const _QuickActionsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSurfaceCard(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        children: [
+          _QuickActionTile(
+            icon: Icons.near_me_outlined,
+            title: 'Incoming Requests',
+            subtitle: 'Review matching customer requests',
+            onTap: () => context.go(RoutePaths.shopRequests),
+          ),
+          const Divider(height: 1),
+          _QuickActionTile(
+            icon: Icons.chat_bubble_outline_rounded,
+            title: 'Shop Chats',
+            subtitle: 'Follow up with customers',
+            onTap: () => context.go(RoutePaths.shopChats),
+          ),
+          const Divider(height: 1),
+          _QuickActionTile(
+            icon: Icons.storefront_outlined,
+            title: 'Store Profile',
+            subtitle: 'Manage public store details',
+            onTap: () => context.go(RoutePaths.shopProfile),
           ),
         ],
       ),
@@ -530,24 +599,48 @@ class _RequestOpportunityCard extends StatelessWidget {
   }
 }
 
-class _RequestMeta extends StatelessWidget {
-  const _RequestMeta({
+class _QuickActionTile extends StatelessWidget {
+  const _QuickActionTile({
     required this.icon,
-    required this.label,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
   });
 
   final IconData icon;
-  final String label;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: AppColors.textMuted),
-        const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          child: Row(
+            children: [
+              _ToneIcon(icon: icon, tone: AppStatusTone.neutral, size: 38),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -594,84 +687,3 @@ class _ToneIcon extends StatelessWidget {
     );
   }
 }
-
-class _DashboardRequest {
-  const _DashboardRequest({
-    required this.id,
-    required this.title,
-    required this.customerName,
-    required this.description,
-    required this.distance,
-    required this.age,
-    required this.budget,
-    this.isNew = false,
-    this.isUrgent = false,
-  });
-
-  final String id;
-  final String title;
-  final String customerName;
-  final String description;
-  final String distance;
-  final String age;
-  final String budget;
-  final bool isNew;
-  final bool isUrgent;
-}
-
-const _nearbyRequests = [
-  _DashboardRequest(
-    id: 'red-hoodie-size-l',
-    title: 'Looking for Red Hoodie',
-    customerName: 'Rajesh K.',
-    description:
-        'Need a red hoodie, size L, preferably cotton material. Looking for good quality.',
-    distance: '350m away',
-    age: '10 minutes ago',
-    budget: 'Rs. 2000-3000',
-    isNew: true,
-  ),
-  _DashboardRequest(
-    id: 'iphone-14-pro-case',
-    title: 'iPhone 14 Pro Case',
-    customerName: 'Priya S.',
-    description:
-        'Looking for a durable phone case for iPhone 14 Pro, preferably with drop protection.',
-    distance: '1.2km away',
-    age: '25 minutes ago',
-    budget: 'Rs. 1500',
-    isNew: true,
-    isUrgent: true,
-  ),
-  _DashboardRequest(
-    id: 'basmati-rice-2kg',
-    title: '2kg Basmati Rice',
-    customerName: 'Amit P.',
-    description:
-        'Need good quality basmati rice, 2kg pack. Prefer India Gate or similar brand.',
-    distance: '500m away',
-    age: '1 hour ago',
-    budget: 'Rs. 800-1000',
-  ),
-  _DashboardRequest(
-    id: 'wireless-headphones',
-    title: 'Wireless Headphones',
-    customerName: 'Sneha M.',
-    description:
-        'Looking for wireless headphones with good battery life. Budget friendly options preferred.',
-    distance: '800m away',
-    age: '2 hours ago',
-    budget: 'Rs. 3000-5000',
-    isNew: true,
-  ),
-  _DashboardRequest(
-    id: 'yoga-mat',
-    title: 'Yoga Mat',
-    customerName: 'Maya L.',
-    description:
-        'Need a non-slip yoga mat, preferably 6mm thickness. Any color is fine.',
-    distance: '1.5km away',
-    age: '3 hours ago',
-    budget: 'Rs. 1500-2000',
-  ),
-];

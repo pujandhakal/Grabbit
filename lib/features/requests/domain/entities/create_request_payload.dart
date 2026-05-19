@@ -6,6 +6,8 @@ class CreateRequestPayload {
     required this.quantity,
     required this.urgency,
     required this.locationText,
+    this.latitude,
+    this.longitude,
     this.budgetMin,
     this.budgetMax,
   });
@@ -16,6 +18,8 @@ class CreateRequestPayload {
   final String quantity;
   final String urgency;
   final String locationText;
+  final double? latitude;
+  final double? longitude;
   final int? budgetMin;
   final int? budgetMax;
 
@@ -27,6 +31,8 @@ class CreateRequestPayload {
       'quantity': quantity,
       'urgency': urgency,
       'locationText': locationText,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       if (budgetMin != null) 'budgetMin': budgetMin,
       if (budgetMax != null) 'budgetMax': budgetMax,
     };

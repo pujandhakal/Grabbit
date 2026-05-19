@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const authRouter = require("./routes/auth");
 const requestsRouter = require("./routes/requests");
 const shopRouter = require("./routes/shop");
+const chatRouter = require("./routes/chat");
 const ShopProfile = require("./models/shop_profile");
 
 const PORT = 3000;
@@ -29,6 +30,7 @@ app.use(express.json());
 app.use(authRouter);
 app.use(requestsRouter);
 app.use(shopRouter);
+app.use(chatRouter);
 
 io.use((socket, next) => {
   try {

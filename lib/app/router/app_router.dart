@@ -11,6 +11,7 @@ import 'package:grabbit/features/chat/presentation/shop/screens/shop_chats_scree
 import 'package:grabbit/features/customer_shell/presentation/widgets/customer_shell.dart';
 import 'package:grabbit/features/home/presentation/screens/home_screen.dart';
 import 'package:grabbit/features/profile/presentation/screens/profile_screen.dart';
+import 'package:grabbit/features/profile/presentation/screens/customer_profile_detail_screens.dart';
 import 'package:grabbit/features/profile/presentation/shop/screens/shop_profile_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/post_request_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/request_responses_screen.dart';
@@ -159,11 +160,52 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
+        path: RoutePaths.editProfile,
+        pageBuilder: (context, state) =>
+            fadeSlidePage(state: state, child: const EditProfileScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.savedAddresses,
+        pageBuilder: (context, state) =>
+            fadeSlidePage(state: state, child: const SavedAddressesScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.myReviews,
+        pageBuilder: (context, state) =>
+            fadeSlidePage(state: state, child: const MyReviewsScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.notificationSettings,
+        pageBuilder: (context, state) => fadeSlidePage(
+          state: state,
+          child: const NotificationSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.requestDefaults,
+        pageBuilder: (context, state) =>
+            fadeSlidePage(state: state, child: const RequestDefaultsScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.helpSupport,
+        pageBuilder: (context, state) =>
+            fadeSlidePage(state: state, child: const HelpSupportScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.termsConditions,
+        pageBuilder: (context, state) =>
+            fadeSlidePage(state: state, child: const TermsConditionsScreen()),
+      ),
+      GoRoute(
         path: RoutePaths.chatDetail,
         pageBuilder: (context, state) => fadeSlidePage(
           state: state,
           child: ChatDetailScreen(
-            shopName: state.uri.queryParameters['shop'] ?? 'Tech Haven',
+            peerName: state.uri.queryParameters['peer'] ??
+                state.uri.queryParameters['shop'] ??
+                'Conversation',
+            peerUserId: state.uri.queryParameters['peerUserId'],
+            requestId: state.uri.queryParameters['requestId'],
           ),
         ),
       ),
@@ -221,7 +263,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => fadeSlidePage(
           state: state,
           child: ChatDetailScreen(
-            shopName: state.uri.queryParameters['shop'] ?? 'Customer',
+            peerName: state.uri.queryParameters['peer'] ??
+                state.uri.queryParameters['shop'] ??
+                'Customer',
+            peerUserId: state.uri.queryParameters['peerUserId'],
+            requestId: state.uri.queryParameters['requestId'],
           ),
         ),
       ),

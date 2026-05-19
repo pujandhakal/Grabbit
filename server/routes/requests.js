@@ -34,10 +34,54 @@ function budgetText(request) {
   return "Budget open";
 }
 
+function normalizeCoord(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function distanceText(request, profile) {
+  const requestLat = normalizeCoord(request.latitude);
+  const requestLng = normalizeCoord(request.longitude);
+  const shopLat = normalizeCoord(profile?.latitude);
+  const shopLng = normalizeCoord(profile?.longitude);
+
+  if (
+    requestLat === null ||
+    requestLng === null ||
+    shopLat === null ||
+    shopLng === null
+  ) {
+    return "Distance unavailable";
+  }
+
+  const toRad = (degrees) => (degrees * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(shopLat - requestLat);
+  const dLng = toRad(shopLng - requestLng);
+  const lat1 = toRad(requestLat);
+  const lat2 = toRad(shopLat);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) *
+      Math.cos(lat2) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const distanceKm =
+    earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  if (distanceKm < 1) {
+    return `${Math.max(1, Math.round(distanceKm * 1000))}m away`;
+  }
+
+  return `${distanceKm.toFixed(1)}km away`;
+}
+
 function requestSummary(request) {
   const responseCount = request.responseCount || 0;
   return {
     id: request._id.toString(),
+    customerId: request.customerId?.toString() || "",
     title: request.title,
     subtitle:
       request.description || `${request.category} request near ${request.locationText}`,
@@ -53,13 +97,16 @@ function requestSummary(request) {
     quantity: request.quantity || "",
     urgency: request.urgency,
     locationText: request.locationText,
+    latitude: request.latitude,
+    longitude: request.longitude,
     budgetText: budgetText(request),
     customerName: "Customer",
   };
 }
 
-function responseDto(response) {
+function responseDto(response, request) {
   const profile = response.shopProfileId;
+  const reviewCount = profile?.reviewCount || 0;
   return {
     id: response._id.toString(),
     shopId:
@@ -67,11 +114,12 @@ function responseDto(response) {
       response.shopProfileId?._id?.toString() ||
       response.shopProfileId?.toString() ||
       response.shopUserId.toString(),
+    shopUserId: response.shopUserId.toString(),
     name: profile?.businessName || "Shop",
-    distance: profile?.addressText || "Nearby",
+    distance: distanceText(request, profile),
     respondedAgo: `${formatAgo(response.createdAt)}`,
-    rating: String(profile?.rating || 4.8),
-    reviews: `(${profile?.reviewCount || 0} reviews)`,
+    rating: reviewCount > 0 ? Number(profile?.rating || 0).toFixed(1) : "-",
+    reviews: `(${reviewCount} reviews)`,
     message: response.message,
     price: response.price,
   };
@@ -90,6 +138,8 @@ requestsRouter.post(
         quantity = "",
         urgency = "need_soon",
         locationText = "Kathmandu, New Baneshwor",
+        latitude,
+        longitude,
         budgetMin,
         budgetMax,
       } = req.body;
@@ -106,6 +156,8 @@ requestsRouter.post(
         quantity,
         urgency,
         locationText,
+        latitude: normalizeCoord(latitude),
+        longitude: normalizeCoord(longitude),
         budgetMin: budgetMin === "" ? undefined : budgetMin,
         budgetMax: budgetMax === "" ? undefined : budgetMax,
       });
@@ -160,7 +212,7 @@ requestsRouter.get(
 
       return res.json({
         request: requestSummary(request),
-        responses: responses.map(responseDto),
+        responses: responses.map((response) => responseDto(response, request)),
       });
     } catch (error) {
       return res.status(500).json({ err: error.message });
@@ -212,7 +264,7 @@ requestsRouter.post(
       const populated = await ShopResponse.findById(response._id).populate(
         "shopProfileId"
       );
-      const responsePayload = responseDto(populated);
+      const responsePayload = responseDto(populated, request);
       const requestPayload = requestSummary(request);
 
       const io = req.app.get("io");
@@ -230,6 +282,62 @@ requestsRouter.post(
       if (error.code === 11000) {
         return res.status(400).json({ msg: "You already responded to this request." });
       }
+      return res.status(500).json({ err: error.message });
+    }
+  }
+);
+
+requestsRouter.put(
+  "/api/requests/:requestId/complete",
+  auth,
+  requireRole("customer"),
+  async (req, res) => {
+    try {
+      const { shopUserId } = req.body;
+
+      if (
+        !mongoose.Types.ObjectId.isValid(req.params.requestId) ||
+        !mongoose.Types.ObjectId.isValid(shopUserId)
+      ) {
+        return res.status(400).json({ msg: "Invalid request or shop id." });
+      }
+
+      const request = await CustomerRequest.findById(req.params.requestId);
+      if (!request || request.customerId.toString() !== req.user.userId) {
+        return res.status(404).json({ msg: "Request not found." });
+      }
+
+      if (
+        request.status === "completed" &&
+        request.purchasedShopUserId &&
+        request.purchasedShopUserId.toString() !== shopUserId
+      ) {
+        return res
+          .status(400)
+          .json({ msg: "This request is already completed." });
+      }
+
+      const response = await ShopResponse.findOne({
+        requestId: request._id,
+        shopUserId,
+      });
+      if (!response) {
+        return res
+          .status(400)
+          .json({ msg: "Choose a shop that responded to this request." });
+      }
+
+      request.status = "completed";
+      request.purchasedShopUserId = shopUserId;
+      await request.save();
+
+      const payload = requestSummary(request);
+      const io = req.app.get("io");
+      io.to(`user:${req.user.userId}`).emit("request:updated", payload);
+      io.to(`user:${shopUserId}`).emit("request:updated", payload);
+
+      return res.json({ request: payload });
+    } catch (error) {
       return res.status(500).json({ err: error.message });
     }
   }
@@ -281,7 +389,7 @@ requestsRouter.put(
         return res.status(404).json({ msg: "Respond before editing this request." });
       }
 
-      const responsePayload = responseDto(response);
+      const responsePayload = responseDto(response, request);
       const requestPayload = requestSummary(request);
       const io = req.app.get("io");
 

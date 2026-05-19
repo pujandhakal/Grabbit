@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:grabbit/app/router/route_paths.dart';
+import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/core/widgets/app_primary_button.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
@@ -239,6 +241,22 @@ class _RequestResponseForm extends StatelessWidget {
                 isLoading: isSubmitting,
                 onPressed: onSubmit,
               ),
+              if (request.hasResponded && request.customerId.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(
+                    '${RoutePaths.shopChatDetail}'
+                    '?peerUserId=${request.customerId}'
+                    '&requestId=${request.id}'
+                    '&peer=${Uri.encodeComponent(request.customerName)}',
+                  ),
+                  icon: const Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: AppColors.primaryDark,
+                  ),
+                  label: const Text('Message customer'),
+                ),
+              ],
             ],
           ),
         ),

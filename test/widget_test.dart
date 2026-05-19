@@ -8,10 +8,15 @@ import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
 import 'package:grabbit/features/auth/domain/entities/user_role.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:grabbit/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:grabbit/features/chat/data/repositories/chat_repository.dart';
+import 'package:grabbit/features/chat/domain/entities/chat_thread_summary.dart';
 import 'package:grabbit/features/marketplace/data/repositories/api_shops_repository.dart';
 import 'package:grabbit/features/marketplace/data/repositories/mock_shops_repository.dart';
 import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
+import 'package:grabbit/features/profile/data/repositories/customer_profile_repository.dart';
+import 'package:grabbit/features/profile/domain/entities/customer_profile.dart';
 import 'package:grabbit/features/profile/domain/entities/shop_profile.dart';
+import 'package:grabbit/features/profile/presentation/shop/screens/shop_profile_screen.dart';
 import 'package:grabbit/features/requests/data/repositories/api_requests_repository.dart';
 import 'package:grabbit/features/requests/data/repositories/mock_requests_repository.dart';
 
@@ -77,6 +82,12 @@ void main() {
     await tester.drag(find.byType(ListView).first, const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('Profile'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Danger Zone'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Delete Account'), findsOneWidget);
   });
 
   testWidgets('chat detail opens without bottom navigation', (tester) async {
@@ -196,7 +207,7 @@ void main() {
 
   testWidgets('shop shell navigation switches between shop tabs',
       (tester) async {
-    tester.view.physicalSize = const Size(1080, 3200);
+    tester.view.physicalSize = const Size(1080, 6000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -216,10 +227,15 @@ void main() {
 
     expect(find.text('Shop Dashboard'), findsNothing);
     expect(find.text('Kathmandu Electronics'), findsOneWidget);
-    expect(find.text('New Requests Near You'), findsOneWidget);
-    expect(find.text('Filter & Sort Requests'), findsOneWidget);
-    expect(find.text('Looking for Red Hoodie'), findsOneWidget);
-    expect(find.text('iPhone 14 Pro Case'), findsOneWidget);
+    expect(find.text('Store is visible'), findsOneWidget);
+    expect(find.text('Today at a glance'), findsOneWidget);
+    expect(find.text('Needs Response'), findsOneWidget);
+    expect(find.text('Active Responses'), findsOneWidget);
+    expect(find.text('Unread Chats'), findsOneWidget);
+    expect(find.text('Quick actions'), findsOneWidget);
+    expect(find.text('New Requests Near You'), findsNothing);
+    expect(find.text('Filter & Sort Requests'), findsNothing);
+    expect(find.text('Looking for Red Hoodie'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('shop-nav-requests')));
     await tester.pumpAndSettle();
@@ -234,7 +250,73 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('shop-nav-profile')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Verify Your Store'), findsOneWidget);
+    expect(find.text('Store Profile'), findsOneWidget);
+  });
+
+  testWidgets('shop profile shows danger zone', (tester) async {
+    tester.view.physicalSize = const Size(1080, 6000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = _containerWithAuth(role: UserRole.shop);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: ShopProfileScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Store Profile'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1600));
+    await tester.pumpAndSettle();
+    expect(find.text('DANGER ZONE'), findsOneWidget);
+    expect(find.text('Delete Account'), findsOneWidget);
+  });
+
+  testWidgets('customer profile rows open detail screens', (tester) async {
+    tester.view.physicalSize = const Size(1080, 4200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = _containerWithAuth(role: UserRole.customer);
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.profile);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final rows = <String, String>{
+      'Edit Profile': 'Save Profile',
+      'Saved Addresses': 'New Baneshwor, Kathmandu',
+      'My Reviews': 'No reviews yet',
+      'Notifications': 'Request responses',
+      'Request Defaults': 'Preferred Categories',
+      'Help & Support': 'Posting requests',
+      'Terms & Conditions': 'Using Grabbit',
+    };
+
+    for (final entry in rows.entries) {
+      await tester.tap(find.text(entry.key));
+      await tester.pumpAndSettle();
+      expect(find.text(entry.value), findsOneWidget);
+      router.go(RoutePaths.profile);
+      await tester.pumpAndSettle();
+    }
   });
 }
 
@@ -246,6 +328,9 @@ ProviderContainer _containerWithAuth({required UserRole? role}) {
         const MockRequestsRepository(),
       ),
       shopsRepositoryProvider.overrideWithValue(const MockShopsRepository()),
+      chatThreadsProvider.overrideWith((ref) async => _mockChatThreads),
+      customerProfileProvider.overrideWith((ref) async => _mockCustomerProfile),
+      customerReviewsProvider.overrideWith((ref) async => const []),
       shopProfileProvider.overrideWith(
         (ref) async => const ShopProfile(
           businessName: 'Kathmandu Electronics',
@@ -267,6 +352,62 @@ ProviderContainer _containerWithAuth({required UserRole? role}) {
     ],
   );
 }
+
+final _mockChatThreads = [
+  ChatThreadSummary(
+    threadId: 'thread-1',
+    peerUserId: 'shop-user-1',
+    peerName: 'Tech Haven',
+    requestId: defaultRequestId,
+    requestTitle: 'Red Hoodie, Size L',
+    lastMessage: 'We have your requested laptop in stock.',
+    lastMessageAt: DateTime(2026, 5, 19, 10, 45),
+    timeLabel: '10 min ago',
+    unreadCount: 1,
+    isUnread: true,
+  ),
+];
+
+const _mockCustomerProfile = CustomerProfile(
+  user: UserEntity(
+    id: '1',
+    name: 'Pujan Dhakal',
+    email: 'pujan@example.com',
+    phone: '9800000000',
+    role: UserRole.customer,
+    token: '',
+  ),
+  memberSince: 'Jan 2024',
+  stats: CustomerProfileStats(
+    totalRequests: 24,
+    completedRequests: 18,
+    reviewCount: 4,
+  ),
+  addresses: [
+    CustomerAddress(
+      id: 'addr-1',
+      label: 'Home',
+      addressText: 'New Baneshwor, Kathmandu',
+      city: 'Kathmandu',
+      landmark: 'Near Civil Hospital',
+      phone: '9800000000',
+      isDefault: true,
+    ),
+  ],
+  notificationSettings: CustomerNotificationSettings(
+    requestResponses: true,
+    chatMessages: true,
+    purchaseUpdates: true,
+    promotions: false,
+  ),
+  preferences: CustomerPreferences(
+    categories: ['Electronics'],
+    budgetMin: 1000,
+    budgetMax: 5000,
+    searchRadiusKm: 5,
+  ),
+  enabledNotificationCount: 3,
+);
 
 class _FakeAuthController extends AuthController {
   _FakeAuthController(this.role);

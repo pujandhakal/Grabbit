@@ -8,9 +8,11 @@ class ShopResponse {
     required this.reviews,
     required this.message,
     required this.price,
+    this.shopUserId = '',
   });
 
   final String shopId;
+  final String shopUserId;
   final String name;
   final String distance;
   final String respondedAgo;

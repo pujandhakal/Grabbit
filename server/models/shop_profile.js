@@ -79,7 +79,7 @@ const shopProfileSchema = mongoose.Schema(
     },
     rating: {
       type: Number,
-      default: 4.8,
+      default: 0,
     },
     reviewCount: {
       type: Number,

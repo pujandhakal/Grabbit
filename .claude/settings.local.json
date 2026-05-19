@@ -12,7 +12,8 @@
       "Bash(flutter test *)",
       "Bash(dart format *)",
       "Bash(powershell *)",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "Bash(node *)"
     ]
   }
 }

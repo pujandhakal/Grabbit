@@ -17,11 +17,13 @@ class ShopRequestModel extends ShopRequest {
     required super.responsePrice,
     required super.responseMessage,
     required super.respondedAgo,
+    super.customerId,
   });
 
   factory ShopRequestModel.fromMap(Map<String, dynamic> map) {
     return ShopRequestModel(
       id: map['id'] as String? ?? '',
+      customerId: map['customerId'] as String? ?? '',
       title: map['title'] as String? ?? '',
       subtitle: map['subtitle'] as String? ?? '',
       description: map['description'] as String? ?? '',

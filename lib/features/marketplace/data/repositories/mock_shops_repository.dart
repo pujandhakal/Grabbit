@@ -17,6 +17,14 @@ class MockShopsRepository implements ShopsRepository {
 
     return details;
   }
+
+  @override
+  Future<void> submitReview({
+    required String shopId,
+    required String requestId,
+    required int rating,
+    required String body,
+  }) async {}
 }
 
 const _shops = {
@@ -40,6 +48,7 @@ const _shops = {
       StoreReview(
         initials: 'PS',
         name: 'Priya Sharma',
+        rating: 5,
         timeAgo: '2 days ago',
         body:
             'Excellent service! Found exactly what I was looking for. The staff was very helpful and friendly.',
@@ -47,6 +56,7 @@ const _shops = {
       StoreReview(
         initials: 'AK',
         name: 'Amit Kumar',
+        rating: 4,
         timeAgo: '5 days ago',
         body:
             'Good collection and reasonable prices. Quick response to my request.',
@@ -54,6 +64,7 @@ const _shops = {
       StoreReview(
         initials: 'ST',
         name: 'Sneha Thapa',
+        rating: 5,
         timeAgo: '1 week ago',
         body:
             'Amazing quality products! Will definitely shop here again. Highly recommended!',

@@ -15,9 +15,11 @@ class ShopRequest {
     required this.responsePrice,
     required this.responseMessage,
     required this.respondedAgo,
+    this.customerId = '',
   });
 
   final String id;
+  final String customerId;
   final String title;
   final String subtitle;
   final String description;

@@ -77,6 +77,39 @@ void main() {
     expect(user.role, UserRole.customer);
   });
 
+  test('repository sends delete account request with auth token', () async {
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          const AppConfig(apiBaseUrl: 'http://localhost:3000'),
+        ),
+        apiTokenProvider.overrideWith((ref) => 'token-123'),
+        httpClientProvider.overrideWithValue(
+          MockClient((request) async {
+            expect(request.method, 'DELETE');
+            expect(request.url.toString(), 'http://localhost:3000/api/account');
+            expect(
+              request.headers['Authorization'] ??
+                  request.headers['authorization'],
+              'Bearer token-123',
+            );
+            expect(request.body, contains('"password":"secret123"'));
+            expect(request.body, contains('"confirmation":"DELETE"'));
+            return http.Response('{}', 200);
+          }),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final repository = container.read(authRepositoryProvider);
+
+    await repository.deleteAccount(
+      password: 'secret123',
+      confirmation: 'DELETE',
+    );
+  });
+
   test('repository surfaces api errors', () async {
     final container = ProviderContainer(
       overrides: [

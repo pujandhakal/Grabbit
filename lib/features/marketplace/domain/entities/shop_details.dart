@@ -46,12 +46,14 @@ class StoreReview {
   const StoreReview({
     required this.initials,
     required this.name,
+    required this.rating,
     required this.timeAgo,
     required this.body,
   });
 
   final String initials;
   final String name;
+  final int rating;
   final String timeAgo;
   final String body;
 }
