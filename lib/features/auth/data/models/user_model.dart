@@ -1,4 +1,5 @@
 import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
 
 class UserModel extends UserEntity {
   const UserModel({
@@ -6,7 +7,7 @@ class UserModel extends UserEntity {
     required super.name,
     required super.email,
     required super.phone,
-    required super.type,
+    required super.role,
     required super.token,
   });
 
@@ -16,7 +17,7 @@ class UserModel extends UserEntity {
       name: map['name'] as String? ?? '',
       email: map['email'] as String? ?? '',
       phone: map['phone'] as String? ?? '',
-      type: map['type'] as String? ?? '',
+      role: UserRole.fromWireName(map['type'] as String?),
       token: map['token'] as String? ?? '',
     );
   }

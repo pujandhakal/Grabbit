@@ -1,11 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grabbit/features/requests/data/repositories/api_requests_repository.dart';
 import 'package:grabbit/features/requests/data/repositories/mock_requests_repository.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 
 void main() {
   test('request responses provider loads mock responses', () async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        requestsRepositoryProvider.overrideWithValue(
+          const MockRequestsRepository(),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
 
     final bundle = await container.read(

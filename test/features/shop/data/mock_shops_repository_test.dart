@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
-import 'package:grabbit/features/shop/data/repositories/mock_shops_repository.dart';
+import 'package:grabbit/features/marketplace/data/repositories/mock_shops_repository.dart';
 
 void main() {
   test('mock shops repository returns store details by id', () async {

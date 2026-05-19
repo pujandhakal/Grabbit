@@ -4,7 +4,9 @@ import 'package:grabbit/core/config/app_config.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/core/network/api_client.dart';
 import 'package:grabbit/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:grabbit/features/auth/domain/entities/login_payload.dart';
 import 'package:grabbit/features/auth/domain/entities/sign_up_payload.dart';
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -18,8 +20,9 @@ void main() {
         httpClientProvider.overrideWithValue(
           MockClient((request) async {
             expect(request.url.toString(), 'http://localhost:3000/api/signup');
+            expect(request.body, contains('"type":"shop"'));
             return http.Response(
-              '{"user":{"_id":"1","name":"Pujan","email":"pujan@example.com"}}',
+              '{"user":{"_id":"1","name":"Pujan","email":"pujan@example.com","type":"shop"}}',
               200,
             );
           }),
@@ -34,11 +37,44 @@ void main() {
         name: 'Pujan',
         email: 'pujan@example.com',
         password: '12345678',
+        role: UserRole.shop,
       ),
     );
 
     expect(user.id, '1');
     expect(user.email, 'pujan@example.com');
+    expect(user.role, UserRole.shop);
+  });
+
+  test('repository maps login response into entity', () async {
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          const AppConfig(apiBaseUrl: 'http://localhost:3000'),
+        ),
+        httpClientProvider.overrideWithValue(
+          MockClient((request) async {
+            expect(request.url.toString(), 'http://localhost:3000/api/login');
+            return http.Response(
+              '{"user":{"_id":"1","name":"Pujan","email":"pujan@example.com","type":"customer"}}',
+              200,
+            );
+          }),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final repository = container.read(authRepositoryProvider);
+    final user = await repository.login(
+      const LoginPayload(
+        email: 'pujan@example.com',
+        password: '12345678',
+      ),
+    );
+
+    expect(user.id, '1');
+    expect(user.role, UserRole.customer);
   });
 
   test('repository surfaces api errors', () async {
@@ -67,6 +103,7 @@ void main() {
           name: 'Pujan',
           email: 'pujan@example.com',
           password: '12345678',
+          role: UserRole.customer,
         ),
       ),
       throwsA(

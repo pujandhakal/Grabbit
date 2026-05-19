@@ -2,8 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:grabbit/features/auth/domain/entities/login_payload.dart';
 import 'package:grabbit/features/auth/domain/entities/sign_up_payload.dart';
 import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
 import 'package:grabbit/features/auth/domain/repositories/auth_repository.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 
@@ -15,7 +17,7 @@ void main() {
         name: 'Pujan',
         email: 'pujan@example.com',
         phone: '',
-        type: '',
+        role: UserRole.customer,
         token: '',
       ),
     );
@@ -33,6 +35,7 @@ void main() {
         name: 'Pujan',
         email: 'pujan@example.com',
         password: '12345678',
+        role: UserRole.customer,
       ),
     );
 
@@ -60,6 +63,7 @@ void main() {
           name: 'Pujan',
           email: 'pujan@example.com',
           password: '12345678',
+          role: UserRole.customer,
         ),
       ),
       throwsA(isA<AppException>()),
@@ -80,6 +84,15 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<UserEntity> signUp(SignUpPayload payload) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return result!;
+  }
+
+  @override
+  Future<UserEntity> login(LoginPayload payload) async {
     if (error != null) {
       throw error!;
     }

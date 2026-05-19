@@ -9,6 +9,8 @@ import 'package:grabbit/core/widgets/app_soft_background.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
 import 'package:grabbit/core/widgets/brand_badge.dart';
 import 'package:grabbit/features/auth/domain/entities/sign_up_payload.dart';
+import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -26,12 +28,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _agreedToTerms = false;
   bool _obscureText = true;
   bool _submitTriggered = false;
-  late final ProviderSubscription<AsyncValue> _authSubscription;
+  UserRole _selectedRole = UserRole.customer;
+  late final ProviderSubscription<AsyncValue<UserEntity?>> _authSubscription;
 
   @override
   void initState() {
     super.initState();
-    _authSubscription = ref.listenManual<AsyncValue>(
+    _authSubscription = ref.listenManual<AsyncValue<UserEntity?>>(
       authControllerProvider,
       (previous, next) {
         if (!_submitTriggered) {
@@ -39,14 +42,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         }
 
         next.whenOrNull(
-          data: (_) {
+          data: (user) {
             _submitTriggered = false;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Account created. You can now log in.'),
-              ),
+              const SnackBar(content: Text('Account created.')),
             );
-            context.go(RoutePaths.login);
+            if (user != null) {
+              context.go(RoutePaths.homeForRole(user.role));
+            }
           },
           error: (error, _) {
             _submitTriggered = false;
@@ -87,6 +90,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
+            role: _selectedRole,
           ),
         );
   }
@@ -101,12 +105,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       body: AppSoftBackground(
         child: SafeArea(
           child: Center(
-            child: SingleChildScrollView(
+            child: Padding(
               padding: const EdgeInsets.all(20),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: Column(
                   children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        onPressed: () => context.go(RoutePaths.login),
+                        icon: const Icon(Icons.chevron_left_rounded),
+                      ),
+                    ),
                     const BrandBadge(size: 92),
                     const SizedBox(height: 18),
                     Text('Join Grabbit', style: theme.textTheme.headlineMedium),
@@ -117,112 +128,144 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 22),
-                    AppSurfaceCard(
-                      padding: const EdgeInsets.all(24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                    Expanded(
+                      child: SingleChildScrollView(
+                        clipBehavior: Clip.none,
+                        padding: const EdgeInsets.fromLTRB(0, 6, 0, 24),
+                        child: AppSurfaceCard(
+                          padding: const EdgeInsets.all(24),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                IconButton(
-                                  onPressed: () => context.go(RoutePaths.login),
-                                  icon: const Icon(Icons.chevron_left_rounded),
-                                ),
-                                const SizedBox(width: 6),
                                 Text(
                                   'Create Account',
                                   style: theme.textTheme.titleLarge,
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text('Full name',
-                                style: theme.textTheme.titleSmall),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _nameController,
-                              decoration: const InputDecoration(
-                                hintText: 'e.g. Pujan Dhakal',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Enter your name.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 18),
-                            Text('Email address',
-                                style: theme.textTheme.titleSmall),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                hintText: 'e.g. user@example.com',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Enter your email.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 18),
-                            Text('Password', style: theme.textTheme.titleSmall),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscureText,
-                              decoration: InputDecoration(
-                                hintText: 'At least 8 characters',
-                                suffixIcon: IconButton(
-                                  onPressed: () {
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Full name',
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _nameController,
+                                  decoration: const InputDecoration(
+                                    hintText: 'e.g. Pujan Dhakal',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Enter your name.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 18),
+                                Text(
+                                  'Email address',
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: const InputDecoration(
+                                    hintText: 'e.g. user@example.com',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Enter your email.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 18),
+                                Text(
+                                  'Password',
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: _obscureText,
+                                  decoration: InputDecoration(
+                                    hintText: 'At least 8 characters',
+                                    suffixIcon: IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscureText = !_obscureText;
+                                        });
+                                      },
+                                      icon: Icon(
+                                        _obscureText
+                                            ? Icons.visibility_off_outlined
+                                            : Icons.visibility_outlined,
+                                      ),
+                                    ),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null ||
+                                        value.trim().length < 8) {
+                                      return 'Use at least 8 characters.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 18),
+                                Text(
+                                  'Account type',
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: 8),
+                                SegmentedButton<UserRole>(
+                                  segments: const [
+                                    ButtonSegment<UserRole>(
+                                      value: UserRole.customer,
+                                      icon: Icon(Icons.person_outline_rounded),
+                                      label: Text('Customer'),
+                                    ),
+                                    ButtonSegment<UserRole>(
+                                      value: UserRole.shop,
+                                      icon: Icon(Icons.storefront_outlined),
+                                      label: Text('Shop'),
+                                    ),
+                                  ],
+                                  selected: {_selectedRole},
+                                  onSelectionChanged: (selection) {
                                     setState(() {
-                                      _obscureText = !_obscureText;
+                                      _selectedRole = selection.first;
                                     });
                                   },
-                                  icon: Icon(
-                                    _obscureText
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
+                                ),
+                                const SizedBox(height: 14),
+                                CheckboxListTile(
+                                  value: _agreedToTerms,
+                                  contentPadding: EdgeInsets.zero,
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  activeColor: AppColors.primary,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _agreedToTerms = value ?? false;
+                                    });
+                                  },
+                                  title: Text(
+                                    'I agree to the terms and privacy policy.',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: AppColors.text,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().length < 8) {
-                                  return 'Use at least 8 characters.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 14),
-                            CheckboxListTile(
-                              value: _agreedToTerms,
-                              contentPadding: EdgeInsets.zero,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              activeColor: AppColors.primary,
-                              onChanged: (value) {
-                                setState(() {
-                                  _agreedToTerms = value ?? false;
-                                });
-                              },
-                              title: Text(
-                                'I agree to the terms and privacy policy.',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.text,
+                                const SizedBox(height: 10),
+                                AppPrimaryButton(
+                                  label: 'Create Account',
+                                  isLoading: isLoading,
+                                  onPressed: _submit,
                                 ),
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 10),
-                            AppPrimaryButton(
-                              label: 'Create Account',
-                              isLoading: isLoading,
-                              onPressed: _submit,
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),

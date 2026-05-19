@@ -14,6 +14,10 @@ class ShopDetails {
     required this.typicalResponseTime,
     required this.address,
     required this.landmark,
+    this.phone = '',
+    this.isVerified = false,
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -30,6 +34,12 @@ class ShopDetails {
   final String typicalResponseTime;
   final String address;
   final String landmark;
+  final String phone;
+  final bool isVerified;
+  final double? latitude;
+  final double? longitude;
+
+  bool get hasLocation => latitude != null && longitude != null;
 }
 
 class StoreReview {

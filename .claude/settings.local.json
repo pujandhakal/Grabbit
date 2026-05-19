@@ -9,7 +9,10 @@
       "Bash(flutter pub *)",
       "Bash(flutter analyze *)",
       "Bash(git stash *)",
-      "Bash(flutter test *)"
+      "Bash(flutter test *)",
+      "Bash(dart format *)",
+      "Bash(powershell *)",
+      "Bash(Get-ChildItem *)"
     ]
   }
 }

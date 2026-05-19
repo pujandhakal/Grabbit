@@ -1,15 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
+import 'package:grabbit/features/requests/domain/entities/create_request_payload.dart';
+import 'package:grabbit/features/requests/domain/entities/create_shop_response_payload.dart';
 import 'package:grabbit/features/requests/domain/entities/request_responses.dart';
 import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
+import 'package:grabbit/features/requests/domain/entities/shop_request.dart';
 import 'package:grabbit/features/requests/domain/entities/shop_response.dart';
 import 'package:grabbit/features/requests/domain/repositories/requests_repository.dart';
 
 const defaultRequestId = 'red-hoodie-size-l';
-
-final requestsRepositoryProvider = Provider<RequestsRepository>((ref) {
-  return const MockRequestsRepository();
-});
 
 class MockRequestsRepository implements RequestsRepository {
   const MockRequestsRepository();
@@ -36,6 +34,100 @@ class MockRequestsRepository implements RequestsRepository {
     return RequestResponses(
       request: request,
       responses: _responsesByRequest[requestId] ?? const [],
+    );
+  }
+
+  @override
+  Future<RequestSummary> createRequest(CreateRequestPayload payload) async {
+    return RequestSummary(
+      id: 'mock-created-request',
+      title: payload.title,
+      subtitle: payload.description,
+      status: RequestStatus.active,
+      time: 'Posted just now',
+      responseText: '0 shops responded',
+      category: payload.category,
+      postedAt: 'Posted just now',
+      description: payload.description,
+      quantity: payload.quantity,
+      urgency: payload.urgency,
+      locationText: payload.locationText,
+      budgetText: 'Budget open',
+    );
+  }
+
+  @override
+  Future<List<ShopRequest>> fetchShopRequests() async {
+    return const [
+      ShopRequest(
+        id: defaultRequestId,
+        title: 'Red Hoodie, Size L',
+        subtitle: 'Customer needs cotton fleece, nearby pickup preferred.',
+        description:
+            'Need a red hoodie, size L, preferably cotton material. Looking for good quality.',
+        category: 'Clothing',
+        budget: 'Rs. 2,500',
+        age: '12 min ago',
+        distance: 'Kathmandu, New Baneshwor',
+        customerName: 'Customer',
+        isNew: true,
+        isUrgent: true,
+        hasResponded: false,
+        responsePrice: '',
+        responseMessage: '',
+        respondedAgo: '',
+      ),
+      ShopRequest(
+        id: 'iphone-14-pro-case',
+        title: 'iPhone 14 Pro Case',
+        subtitle: 'Customer wants drop protection and quick availability.',
+        description:
+            'Looking for a durable phone case for iPhone 14 Pro, preferably with drop protection.',
+        category: 'Electronics',
+        budget: 'Rs. 1,500',
+        age: '25 min ago',
+        distance: 'Kathmandu, Putalisadak',
+        customerName: 'Customer',
+        isNew: false,
+        isUrgent: false,
+        hasResponded: true,
+        responsePrice: 'Rs. 1,450',
+        responseMessage:
+            'We have a shockproof clear case in stock with raised edges and camera protection.',
+        respondedAgo: '8 mins ago',
+      ),
+    ];
+  }
+
+  @override
+  Future<ShopResponse> createShopResponse(
+    CreateShopResponsePayload payload,
+  ) async {
+    return ShopResponse(
+      shopId: 'mock-shop',
+      name: 'Mock Shop',
+      distance: 'Nearby',
+      respondedAgo: 'just now',
+      rating: '4.8',
+      reviews: '(0 reviews)',
+      message: payload.message,
+      price: payload.price,
+    );
+  }
+
+  @override
+  Future<ShopResponse> updateShopResponse(
+    CreateShopResponsePayload payload,
+  ) async {
+    return ShopResponse(
+      shopId: 'mock-shop',
+      name: 'Mock Shop',
+      distance: 'Nearby',
+      respondedAgo: 'just now',
+      rating: '4.8',
+      reviews: '(0 reviews)',
+      message: payload.message,
+      price: payload.price,
     );
   }
 }

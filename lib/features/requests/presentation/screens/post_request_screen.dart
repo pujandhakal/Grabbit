@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/core/widgets/app_primary_button.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
+import 'package:grabbit/features/requests/data/repositories/api_requests_repository.dart';
+import 'package:grabbit/features/requests/domain/entities/create_request_payload.dart';
+import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 
 const _categories = [
   'Groceries',
@@ -15,36 +21,81 @@ const _categories = [
   'Other',
 ];
 
-class PostRequestScreen extends StatefulWidget {
+class PostRequestScreen extends ConsumerStatefulWidget {
   const PostRequestScreen({super.key});
 
   @override
-  State<PostRequestScreen> createState() => _PostRequestScreenState();
+  ConsumerState<PostRequestScreen> createState() => _PostRequestScreenState();
 }
 
-class _PostRequestScreenState extends State<PostRequestScreen> {
+class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _productController = TextEditingController();
   final _detailsController = TextEditingController();
   final _quantityController = TextEditingController();
+  final _budgetMinController = TextEditingController();
+  final _budgetMaxController = TextEditingController();
   String? _category;
   String _urgency = 'need_soon';
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _productController.dispose();
     _detailsController.dispose();
     _quantityController.dispose();
+    _budgetMinController.dispose();
+    _budgetMaxController.dispose();
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Request captured. Connect to backend next.')),
-    );
-    Navigator.of(context).pop();
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      await ref.read(requestsRepositoryProvider).createRequest(
+            CreateRequestPayload(
+              title: _productController.text.trim(),
+              description: _detailsController.text.trim(),
+              category: _category!,
+              quantity: _quantityController.text.trim(),
+              urgency: _urgency,
+              locationText: 'Kathmandu, New Baneshwor',
+              budgetMin: _parseBudget(_budgetMinController.text),
+              budgetMax: _parseBudget(_budgetMaxController.text),
+            ),
+          );
+      ref.invalidate(requestsProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request posted to nearby shops.')),
+      );
+      context.pop();
+    } catch (error) {
+      if (!mounted) return;
+      final message = error is AppException
+          ? error.message
+          : 'Unable to post request. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  int? _parseBudget(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    return int.tryParse(trimmed);
   }
 
   Widget _fieldLabel(String label, {bool required = false}) {
@@ -141,6 +192,32 @@ class _PostRequestScreenState extends State<PostRequestScreen> {
                       decoration: const InputDecoration(
                         hintText: 'e.g., 2 pcs',
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    _fieldLabel('Budget Range (Optional)'),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _budgetMinController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              hintText: 'Min Rs.',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _budgetMaxController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              hintText: 'Max Rs.',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -269,6 +346,7 @@ class _PostRequestScreenState extends State<PostRequestScreen> {
               AppPrimaryButton(
                 label: 'Post Request',
                 icon: Icons.chevron_right_rounded,
+                isLoading: _isSubmitting,
                 onPressed: _submit,
               ),
               const SizedBox(height: 10),

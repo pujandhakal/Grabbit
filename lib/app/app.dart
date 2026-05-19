@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grabbit/app/router/app_router.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/realtime/realtime_connection.dart';
 
 class GrabbitApp extends ConsumerWidget {
   const GrabbitApp({super.key});
@@ -9,6 +10,7 @@ class GrabbitApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    ref.watch(realtimeConnectionProvider);
 
     return MaterialApp.router(
       title: 'Grabbit',

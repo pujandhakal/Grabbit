@@ -4,11 +4,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grabbit/app/app.dart';
 import 'package:grabbit/app/router/app_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
+import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
+import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:grabbit/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:grabbit/features/marketplace/data/repositories/api_shops_repository.dart';
+import 'package:grabbit/features/marketplace/data/repositories/mock_shops_repository.dart';
+import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
+import 'package:grabbit/features/profile/domain/entities/shop_profile.dart';
+import 'package:grabbit/features/requests/data/repositories/api_requests_repository.dart';
+import 'package:grabbit/features/requests/data/repositories/mock_requests_repository.dart';
 
 void main() {
   testWidgets('app boots into login', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: GrabbitApp()));
+    final container = _containerWithAuth(role: null);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Log In'), findsOneWidget);
@@ -16,7 +33,7 @@ void main() {
   });
 
   testWidgets('shell navigation switches between main tabs', (tester) async {
-    final container = ProviderContainer();
+    final container = _containerWithAuth(role: UserRole.customer);
     addTearDown(container.dispose);
     final router = container.read(appRouterProvider);
     router.go(RoutePaths.home);
@@ -63,7 +80,7 @@ void main() {
   });
 
   testWidgets('chat detail opens without bottom navigation', (tester) async {
-    final container = ProviderContainer();
+    final container = _containerWithAuth(role: UserRole.customer);
     addTearDown(container.dispose);
     final router = container.read(appRouterProvider);
     router.go('${RoutePaths.chatDetail}?shop=Tech%20Haven');
@@ -83,7 +100,7 @@ void main() {
 
   testWidgets('request card opens responses page without bottom navigation',
       (tester) async {
-    final container = ProviderContainer();
+    final container = _containerWithAuth(role: UserRole.customer);
     addTearDown(container.dispose);
     final router = container.read(appRouterProvider);
     router.go(RoutePaths.requests);
@@ -115,7 +132,7 @@ void main() {
 
   testWidgets('view store opens store details without bottom navigation',
       (tester) async {
-    final container = ProviderContainer();
+    final container = _containerWithAuth(role: UserRole.customer);
     addTearDown(container.dispose);
     final router = container.read(appRouterProvider);
     router.go(RoutePaths.requests);
@@ -158,9 +175,13 @@ void main() {
   });
 
   testWidgets('sign up screen renders create account flow', (tester) async {
+    final container = _containerWithAuth(role: null);
+    addTearDown(container.dispose);
+
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
           home: SignUpScreen(),
         ),
       ),
@@ -168,6 +189,103 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Join Grabbit'), findsOneWidget);
+    expect(find.text('Customer'), findsOneWidget);
+    expect(find.text('Shop'), findsOneWidget);
     expect(find.widgetWithText(InkWell, 'Create Account'), findsOneWidget);
   });
+
+  testWidgets('shop shell navigation switches between shop tabs',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 3200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = _containerWithAuth(role: UserRole.shop);
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.shopDashboard);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shop Dashboard'), findsNothing);
+    expect(find.text('Kathmandu Electronics'), findsOneWidget);
+    expect(find.text('New Requests Near You'), findsOneWidget);
+    expect(find.text('Filter & Sort Requests'), findsOneWidget);
+    expect(find.text('Looking for Red Hoodie'), findsOneWidget);
+    expect(find.text('iPhone 14 Pro Case'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('shop-nav-requests')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Incoming Requests'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('shop-nav-chats')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shop Chats'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('shop-nav-profile')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verify Your Store'), findsOneWidget);
+  });
+}
+
+ProviderContainer _containerWithAuth({required UserRole? role}) {
+  return ProviderContainer(
+    overrides: [
+      authControllerProvider.overrideWith(() => _FakeAuthController(role)),
+      requestsRepositoryProvider.overrideWithValue(
+        const MockRequestsRepository(),
+      ),
+      shopsRepositoryProvider.overrideWithValue(const MockShopsRepository()),
+      shopProfileProvider.overrideWith(
+        (ref) async => const ShopProfile(
+          businessName: 'Kathmandu Electronics',
+          initials: 'KE',
+          categories: ['Electronics'],
+          addressText: 'New Baneshwor, Kathmandu',
+          phone: '9800000000',
+          description: 'Electronics, accessories, and repairs.',
+          specialties: ['Electronics', 'Accessories'],
+          openStatus: 'Open Now',
+          closingTime: 'Closes 9:00 PM',
+          typicalResponseTime: '15 minutes',
+          landmark: 'Near Civil Hospital',
+          isVerified: true,
+          rating: 4.8,
+          reviewCount: 127,
+        ),
+      ),
+    ],
+  );
+}
+
+class _FakeAuthController extends AuthController {
+  _FakeAuthController(this.role);
+
+  final UserRole? role;
+
+  @override
+  Future<UserEntity?> build() async {
+    if (role == null) {
+      return null;
+    }
+
+    return UserEntity(
+      id: '1',
+      name: role == UserRole.shop ? 'Fashion Hub' : 'Pujan Dhakal',
+      email: role == UserRole.shop ? 'shop@example.com' : 'pujan@example.com',
+      phone: '',
+      role: role!,
+      token: '',
+    );
+  }
 }

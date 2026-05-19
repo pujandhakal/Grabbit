@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/page_transitions.dart';
@@ -6,18 +7,60 @@ import 'package:grabbit/features/auth/presentation/screens/login_screen.dart';
 import 'package:grabbit/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:grabbit/features/chat/presentation/screens/chat_detail_screen.dart';
 import 'package:grabbit/features/chat/presentation/screens/chat_list_screen.dart';
+import 'package:grabbit/features/chat/presentation/shop/screens/shop_chats_screen.dart';
+import 'package:grabbit/features/customer_shell/presentation/widgets/customer_shell.dart';
 import 'package:grabbit/features/home/presentation/screens/home_screen.dart';
 import 'package:grabbit/features/profile/presentation/screens/profile_screen.dart';
+import 'package:grabbit/features/profile/presentation/shop/screens/shop_profile_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/post_request_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/request_responses_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/requests_screen.dart';
-import 'package:grabbit/features/shell/presentation/widgets/app_shell.dart';
-import 'package:grabbit/features/shop/presentation/screens/shop_dashboard_screen.dart';
-import 'package:grabbit/features/shop/presentation/screens/store_details_screen.dart';
+import 'package:grabbit/features/requests/presentation/shop/screens/shop_request_detail_screen.dart';
+import 'package:grabbit/features/requests/presentation/shop/screens/shop_requests_screen.dart';
+import 'package:grabbit/features/shop_dashboard/presentation/screens/shop_dashboard_screen.dart';
+import 'package:grabbit/features/shop_shell/presentation/widgets/shop_shell.dart';
+import 'package:grabbit/features/marketplace/presentation/screens/store_details_screen.dart';
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
+import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final routerRefresh = ref.watch(_routerRefreshProvider);
+
   return GoRouter(
     initialLocation: RoutePaths.login,
+    refreshListenable: routerRefresh,
+    redirect: (context, state) {
+      final authState = ref.read(authControllerProvider);
+      final user = authState.valueOrNull;
+
+      if (authState.isLoading) {
+        return null;
+      }
+
+      final location = state.uri.path;
+      final isAuthRoute =
+          location == RoutePaths.login || location == RoutePaths.signUp;
+      final isCustomerRoute = location.startsWith('/customer');
+      final isShopRoute = location.startsWith('/shop');
+
+      if (user == null) {
+        return isAuthRoute ? null : RoutePaths.login;
+      }
+
+      if (isAuthRoute) {
+        return RoutePaths.homeForRole(user.role);
+      }
+
+      if (user.role == UserRole.customer && isShopRoute) {
+        return RoutePaths.home;
+      }
+
+      if (user.role == UserRole.shop && isCustomerRoute) {
+        return RoutePaths.shopDashboard;
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
         path: RoutePaths.login,
@@ -31,7 +74,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return AppShell(navigationShell: navigationShell);
+          return CustomerShell(navigationShell: navigationShell);
         },
         branches: [
           StatefulShellBranch(
@@ -67,6 +110,49 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: RoutePaths.profile,
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: ProfileScreen()),
+              ),
+            ],
+          ),
+        ],
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ShopShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.shopDashboard,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ShopDashboardScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.shopRequests,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ShopRequestsScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.shopChats,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ShopChatsScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.shopProfile,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ShopProfileScreen()),
               ),
             ],
           ),
@@ -121,10 +207,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             RoutePaths.storeDetailsPath(RoutePaths.defaultShopId),
       ),
       GoRoute(
-        path: RoutePaths.shopDashboard,
-        pageBuilder: (context, state) =>
-            fadeSlidePage(state: state, child: const ShopDashboardScreen()),
+        path: RoutePaths.shopRequestDetail,
+        pageBuilder: (context, state) => fadeSlidePage(
+          state: state,
+          child: ShopRequestDetailScreen(
+            requestId: state.pathParameters['requestId'] ??
+                RoutePaths.defaultRequestId,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.shopChatDetail,
+        pageBuilder: (context, state) => fadeSlidePage(
+          state: state,
+          child: ChatDetailScreen(
+            shopName: state.uri.queryParameters['shop'] ?? 'Customer',
+          ),
+        ),
       ),
     ],
   );
 });
+
+final _routerRefreshProvider = Provider<Listenable>((ref) {
+  final notifier = _RouterRefreshNotifier();
+  ref.listen(authControllerProvider, (_, __) => notifier.notify());
+  ref.onDispose(notifier.dispose);
+  return notifier;
+});
+
+class _RouterRefreshNotifier extends ChangeNotifier {
+  void notify() {
+    notifyListeners();
+  }
+}

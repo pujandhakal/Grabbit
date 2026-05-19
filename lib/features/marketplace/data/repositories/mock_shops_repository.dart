@@ -1,13 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
-import 'package:grabbit/features/shop/domain/entities/shop_details.dart';
-import 'package:grabbit/features/shop/domain/repositories/shops_repository.dart';
+import 'package:grabbit/features/marketplace/domain/entities/shop_details.dart';
+import 'package:grabbit/features/marketplace/domain/repositories/shops_repository.dart';
 
 const defaultShopId = 'fashion-hub-kathmandu';
-
-final shopsRepositoryProvider = Provider<ShopsRepository>((ref) {
-  return const MockShopsRepository();
-});
 
 class MockShopsRepository implements ShopsRepository {
   const MockShopsRepository();

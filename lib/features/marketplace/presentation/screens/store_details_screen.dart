@@ -6,8 +6,9 @@ import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
-import 'package:grabbit/features/shop/domain/entities/shop_details.dart';
-import 'package:grabbit/features/shop/presentation/controllers/shop_providers.dart';
+import 'package:grabbit/features/marketplace/domain/entities/shop_details.dart';
+import 'package:grabbit/features/marketplace/presentation/controllers/shop_providers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StoreDetailsScreen extends ConsumerWidget {
   const StoreDetailsScreen({
@@ -56,7 +57,10 @@ class StoreDetailsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const _StoreBottomActions(),
+          details.maybeWhen(
+            data: (shop) => _StoreBottomActions(shop: shop),
+            orElse: () => const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -344,7 +348,53 @@ class _LocationCard extends StatelessWidget {
 }
 
 class _StoreBottomActions extends StatelessWidget {
-  const _StoreBottomActions();
+  const _StoreBottomActions({required this.shop});
+
+  final ShopDetails shop;
+
+  Future<void> _openDirections(BuildContext context) async {
+    if (!shop.hasLocation) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("This shop hasn't set its map location yet."),
+        ),
+      );
+      return;
+    }
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&destination=${shop.latitude},${shop.longitude}'
+      '&travelmode=driving',
+    );
+    final launched =
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open maps.')),
+      );
+    }
+  }
+
+  Future<void> _callShop(BuildContext context) async {
+    final phone = shop.phone.trim();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("This shop hasn't shared a phone number yet."),
+        ),
+      );
+      return;
+    }
+    final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$sanitized');
+    final launched =
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the dialer.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -377,17 +427,27 @@ class _StoreBottomActions extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.directions_outlined),
-                  label: const Text('Get Direction'),
+                child: Tooltip(
+                  message: shop.hasLocation
+                      ? 'Open directions in Google Maps'
+                      : 'Location not set by shop',
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        shop.hasLocation ? () => _openDirections(context) : null,
+                    icon: const Icon(Icons.directions_outlined),
+                    label: const Text('Get Direction'),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Tooltip(
-                message: 'Contact Store',
+                message: shop.phone.trim().isEmpty
+                    ? 'Phone not shared by shop'
+                    : 'Call ${shop.phone}',
                 child: FilledButton(
-                  onPressed: () {},
+                  onPressed: shop.phone.trim().isEmpty
+                      ? null
+                      : () => _callShop(context),
                   style: FilledButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: const Size(52, 52),

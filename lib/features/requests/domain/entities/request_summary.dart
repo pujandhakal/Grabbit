@@ -14,6 +14,12 @@ class RequestSummary {
     required this.responseText,
     required this.category,
     required this.postedAt,
+    this.description = '',
+    this.quantity = '',
+    this.urgency = 'need_soon',
+    this.locationText = '',
+    this.budgetText = '',
+    this.customerName = 'Customer',
   });
 
   final String id;
@@ -24,4 +30,10 @@ class RequestSummary {
   final String responseText;
   final String category;
   final String postedAt;
+  final String description;
+  final String quantity;
+  final String urgency;
+  final String locationText;
+  final String budgetText;
+  final String customerName;
 }

@@ -1,26 +1,44 @@
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
+
 abstract final class RoutePaths {
   static const login = '/login';
   static const signUp = '/signup';
-  static const home = '/home';
-  static const requests = '/requests';
+  static const home = '/customer/home';
+  static const requests = '/customer/requests';
   static const defaultRequestId = 'red-hoodie-size-l';
   static const defaultShopId = 'fashion-hub-kathmandu';
-  static const requestResponses = '/requests/:requestId/responses';
+  static const requestResponses = '/customer/requests/:requestId/responses';
   static const legacyRequestResponsesStatic = '/requests/responses';
   static const legacyRequestResponses = '/request-responses';
-  static const postRequest = '/post-request';
-  static const chats = '/chats';
-  static const chatDetail = '/chats/detail';
-  static const profile = '/profile';
-  static const storeDetails = '/shops/:shopId';
+  static const postRequest = '/customer/post-request';
+  static const chats = '/customer/chats';
+  static const chatDetail = '/customer/chats/detail';
+  static const profile = '/customer/profile';
+  static const storeDetails = '/customer/shops/:shopId';
   static const legacyStoreDetails = '/stores/fashion-hub-kathmandu';
-  static const shopDashboard = '/shop-dashboard';
+  static const shopDashboard = '/shop/dashboard';
+  static const shopRequests = '/shop/requests';
+  static const shopChats = '/shop/chats';
+  static const shopProfile = '/shop/profile';
+  static const shopRequestDetail = '/shop/requests/:requestId';
+  static const shopChatDetail = '/shop/chats/detail';
 
   static String requestResponsesPath(String requestId) {
-    return '/requests/$requestId/responses';
+    return '/customer/requests/$requestId/responses';
   }
 
   static String storeDetailsPath(String shopId) {
-    return '/shops/$shopId';
+    return '/customer/shops/$shopId';
+  }
+
+  static String shopRequestDetailPath(String requestId) {
+    return '/shop/requests/$requestId';
+  }
+
+  static String homeForRole(UserRole role) {
+    return switch (role) {
+      UserRole.customer => home,
+      UserRole.shop => shopDashboard,
+    };
   }
 }

@@ -1,21 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:grabbit/core/network/api_client.dart';
+import 'package:grabbit/features/auth/data/auth_session_store.dart';
 import 'package:grabbit/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:grabbit/features/auth/domain/entities/login_payload.dart';
 import 'package:grabbit/features/auth/domain/entities/sign_up_payload.dart';
 import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
 import 'package:grabbit/features/auth/domain/repositories/auth_repository.dart';
 
 final authControllerProvider =
-    AutoDisposeAsyncNotifierProvider<AuthController, UserEntity?>(
+    AsyncNotifierProvider<AuthController, UserEntity?>(
   AuthController.new,
 );
 
-class AuthController extends AutoDisposeAsyncNotifier<UserEntity?> {
+class AuthController extends AsyncNotifier<UserEntity?> {
   late final AuthRepository _repository;
+  late final AuthSessionStore _sessionStore;
 
   @override
   Future<UserEntity?> build() async {
     _repository = ref.read(authRepositoryProvider);
-    return null;
+    _sessionStore = ref.read(authSessionStoreProvider);
+    final restoredUser = await _sessionStore.restore();
+    ref.read(apiTokenProvider.notifier).state = restoredUser?.token;
+    return restoredUser;
   }
 
   Future<UserEntity> signUp(SignUpPayload payload) async {
@@ -24,9 +31,35 @@ class AuthController extends AutoDisposeAsyncNotifier<UserEntity?> {
     state = result;
 
     return result.when(
-      data: (user) => user,
+      data: (user) async {
+        ref.read(apiTokenProvider.notifier).state = user.token;
+        await _sessionStore.save(user);
+        return user;
+      },
       error: (error, stackTrace) => throw error,
       loading: () => throw StateError('Signup is still loading.'),
     );
+  }
+
+  Future<UserEntity> login(LoginPayload payload) async {
+    state = const AsyncLoading();
+    final result = await AsyncValue.guard(() => _repository.login(payload));
+    state = result;
+
+    return result.when(
+      data: (user) async {
+        ref.read(apiTokenProvider.notifier).state = user.token;
+        await _sessionStore.save(user);
+        return user;
+      },
+      error: (error, stackTrace) => throw error,
+      loading: () => throw StateError('Login is still loading.'),
+    );
+  }
+
+  Future<void> logout() async {
+    ref.read(apiTokenProvider.notifier).state = null;
+    await _sessionStore.clear();
+    state = const AsyncData(null);
   }
 }

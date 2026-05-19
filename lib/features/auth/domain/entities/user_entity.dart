@@ -1,10 +1,12 @@
+import 'package:grabbit/features/auth/domain/entities/user_role.dart';
+
 class UserEntity {
   const UserEntity({
     required this.id,
     required this.name,
     required this.email,
     required this.phone,
-    required this.type,
+    required this.role,
     required this.token,
   });
 
@@ -12,6 +14,8 @@ class UserEntity {
   final String name;
   final String email;
   final String phone;
-  final String type;
+  final UserRole role;
   final String token;
+
+  String get type => role.wireName;
 }
