@@ -27,6 +27,9 @@ const io = new Server(server, {
 app.set("io", io);
 app.use(cors());
 app.use(express.json());
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true });
+});
 app.use(authRouter);
 app.use(requestsRouter);
 app.use(shopRouter);
@@ -70,4 +73,3 @@ mongoose
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Connected at port ${PORT} hello`);
 });
-

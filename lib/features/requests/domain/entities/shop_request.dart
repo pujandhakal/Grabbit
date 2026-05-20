@@ -1,3 +1,5 @@
+import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
+
 class ShopRequest {
   const ShopRequest({
     required this.id,
@@ -15,6 +17,7 @@ class ShopRequest {
     required this.responsePrice,
     required this.responseMessage,
     required this.respondedAgo,
+    this.status = RequestStatus.active,
     this.customerId = '',
   });
 
@@ -34,4 +37,5 @@ class ShopRequest {
   final String responsePrice;
   final String responseMessage;
   final String respondedAgo;
+  final RequestStatus status;
 }

@@ -325,7 +325,7 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
                         Expanded(
                           child: _UrgencyCard(
                             value: 'need_soon',
-                            emoji: '🔥',
+                            icon: Icons.bolt_rounded,
                             title: 'Need Soon',
                             subtitle: 'Within 24 hours',
                             selected: _urgency == 'need_soon',
@@ -336,7 +336,7 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
                         Expanded(
                           child: _UrgencyCard(
                             value: 'this_week',
-                            emoji: '⏰',
+                            icon: Icons.event_rounded,
                             title: 'This Week',
                             subtitle: '2-7 days',
                             selected: _urgency == 'this_week',
@@ -347,7 +347,7 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
                         Expanded(
                           child: _UrgencyCard(
                             value: 'flexible',
-                            emoji: '😌',
+                            icon: Icons.spa_rounded,
                             title: 'Flexible',
                             subtitle: 'No rush',
                             selected: _urgency == 'flexible',
@@ -477,7 +477,7 @@ class _PhotoUploadArea extends StatelessWidget {
 class _UrgencyCard extends StatelessWidget {
   const _UrgencyCard({
     required this.value,
-    required this.emoji,
+    required this.icon,
     required this.title,
     required this.subtitle,
     required this.selected,
@@ -485,7 +485,7 @@ class _UrgencyCard extends StatelessWidget {
   });
 
   final String value;
-  final String emoji;
+  final IconData icon;
   final String title;
   final String subtitle;
   final bool selected;
@@ -510,7 +510,11 @@ class _UrgencyCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 22)),
+            Icon(
+              icon,
+              size: 24,
+              color: selected ? AppColors.primary : AppColors.textMuted,
+            ),
             const SizedBox(height: 6),
             Text(
               title,

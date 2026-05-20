@@ -17,6 +17,8 @@ abstract class RequestsRepository {
     required String shopUserId,
   });
 
+  Future<void> deleteRequest(String requestId);
+
   Future<List<ShopRequest>> fetchShopRequests();
 
   Future<ShopResponse> createShopResponse(CreateShopResponsePayload payload);

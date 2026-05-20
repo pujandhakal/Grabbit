@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:grabbit/app/application/app_data_refresh.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/network/connectivity_status.dart';
+import 'package:grabbit/core/widgets/app_error_state.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
@@ -19,146 +22,165 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(customerProfileProvider);
+    final hasNetwork = ref.watch(networkConnectionProvider).valueOrNull ?? true;
 
     return Scaffold(
       body: AppStickyPage(
         header: const AppScreenHeader(title: 'Profile'),
-        child: profile.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Unable to load profile.',
-                style: Theme.of(context).textTheme.bodyMedium,
+        child: !hasNetwork
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: AppErrorState.offline(
+                    onRetry: () => refreshSignedInData(ref),
+                  ),
+                ),
+              )
+            : profile.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: AppErrorState.fromError(
+                      error: error,
+                      fallbackTitle: 'Unable to load profile',
+                      fallbackMessage: 'Unable to load profile.',
+                      onRetry: () => refreshSignedInData(ref),
+                    ),
+                  ),
+                ),
+                data: (profile) {
+                  final name = profile.user.name;
+                  final initial = name.trim().isNotEmpty
+                      ? name.trim()[0].toUpperCase()
+                      : 'C';
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
+                    children: [
+                      _ProfileHeaderCard(
+                        initial: initial,
+                        name: name,
+                        email: profile.user.email,
+                        phone: profile.user.phone.isEmpty
+                            ? 'Phone not added'
+                            : profile.user.phone,
+                        requests: profile.stats.totalRequests.toString(),
+                        completed: profile.stats.completedRequests.toString(),
+                        reviews: profile.stats.reviewCount.toString(),
+                      ),
+                      const SizedBox(height: 18),
+                      const AppSectionHeader(title: 'Account'),
+                      const SizedBox(height: 12),
+                      _ProfileSectionCard(
+                        rows: [
+                          _ProfileRow(
+                            icon: Icons.edit_outlined,
+                            label: 'Edit Profile',
+                            onTap: () => context.push(RoutePaths.editProfile),
+                          ),
+                          _ProfileRow(
+                            icon: Icons.location_on_outlined,
+                            label: 'Saved Addresses',
+                            badge: profile.addresses.length.toString(),
+                            onTap: () =>
+                                context.push(RoutePaths.savedAddresses),
+                          ),
+                          _ProfileRow(
+                            icon: Icons.star_border_rounded,
+                            label: 'My Reviews',
+                            badge: profile.stats.reviewCount.toString(),
+                            onTap: () => context.push(RoutePaths.myReviews),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      const AppSectionHeader(title: 'Settings'),
+                      const SizedBox(height: 12),
+                      _ProfileSectionCard(
+                        rows: [
+                          _ProfileRow(
+                            icon: Icons.notifications_outlined,
+                            label: 'Notifications',
+                            badge: profile.enabledNotificationCount.toString(),
+                            onTap: () =>
+                                context.push(RoutePaths.notificationSettings),
+                          ),
+                          _ProfileRow(
+                            icon: Icons.tune_rounded,
+                            label: 'Request Defaults',
+                            badge: profile.preferences.categories.isEmpty
+                                ? null
+                                : profile.preferences.categories.length
+                                    .toString(),
+                            onTap: () =>
+                                context.push(RoutePaths.requestDefaults),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      const AppSectionHeader(title: 'Support'),
+                      const SizedBox(height: 12),
+                      _ProfileSectionCard(
+                        rows: [
+                          _ProfileRow(
+                            icon: Icons.help_outline_rounded,
+                            label: 'Help & Support',
+                            onTap: () => context.push(RoutePaths.helpSupport),
+                          ),
+                          _ProfileRow(
+                            icon: Icons.description_outlined,
+                            label: 'Terms & Conditions',
+                            onTap: () =>
+                                context.push(RoutePaths.termsConditions),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      const AppSectionHeader(title: 'Danger Zone'),
+                      const SizedBox(height: 12),
+                      _ProfileSectionCard(
+                        rows: [
+                          _ProfileRow(
+                            icon: Icons.delete_forever_rounded,
+                            label: 'Delete Account',
+                            iconBackgroundColor: _dangerSoftColor,
+                            iconColor: _dangerColor,
+                            labelColor: _dangerColor,
+                            onTap: () => showDeleteAccountSheet(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .logout();
+                          if (context.mounted) {
+                            context.go(RoutePaths.login);
+                          }
+                        },
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Log Out'),
+                      ),
+                      const SizedBox(height: 18),
+                      Column(
+                        children: [
+                          Text(
+                            'Grabbit v1.0.0',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Member since ${profile.memberSince}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
               ),
-            ),
-          ),
-          data: (profile) {
-            final name = profile.user.name;
-            final initial =
-                name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'C';
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
-              children: [
-                _ProfileHeaderCard(
-                  initial: initial,
-                  name: name,
-                  email: profile.user.email,
-                  phone: profile.user.phone.isEmpty
-                      ? 'Phone not added'
-                      : profile.user.phone,
-                  requests: profile.stats.totalRequests.toString(),
-                  completed: profile.stats.completedRequests.toString(),
-                  reviews: profile.stats.reviewCount.toString(),
-                ),
-                const SizedBox(height: 18),
-                const AppSectionHeader(title: 'Account'),
-                const SizedBox(height: 12),
-                _ProfileSectionCard(
-                  rows: [
-                    _ProfileRow(
-                      icon: Icons.edit_outlined,
-                      label: 'Edit Profile',
-                      onTap: () => context.push(RoutePaths.editProfile),
-                    ),
-                    _ProfileRow(
-                      icon: Icons.location_on_outlined,
-                      label: 'Saved Addresses',
-                      badge: profile.addresses.length.toString(),
-                      onTap: () => context.push(RoutePaths.savedAddresses),
-                    ),
-                    _ProfileRow(
-                      icon: Icons.star_border_rounded,
-                      label: 'My Reviews',
-                      badge: profile.stats.reviewCount.toString(),
-                      onTap: () => context.push(RoutePaths.myReviews),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const AppSectionHeader(title: 'Settings'),
-                const SizedBox(height: 12),
-                _ProfileSectionCard(
-                  rows: [
-                    _ProfileRow(
-                      icon: Icons.notifications_outlined,
-                      label: 'Notifications',
-                      badge: profile.enabledNotificationCount.toString(),
-                      onTap: () =>
-                          context.push(RoutePaths.notificationSettings),
-                    ),
-                    _ProfileRow(
-                      icon: Icons.tune_rounded,
-                      label: 'Request Defaults',
-                      badge: profile.preferences.categories.isEmpty
-                          ? null
-                          : profile.preferences.categories.length.toString(),
-                      onTap: () => context.push(RoutePaths.requestDefaults),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const AppSectionHeader(title: 'Support'),
-                const SizedBox(height: 12),
-                _ProfileSectionCard(
-                  rows: [
-                    _ProfileRow(
-                      icon: Icons.help_outline_rounded,
-                      label: 'Help & Support',
-                      onTap: () => context.push(RoutePaths.helpSupport),
-                    ),
-                    _ProfileRow(
-                      icon: Icons.description_outlined,
-                      label: 'Terms & Conditions',
-                      onTap: () => context.push(RoutePaths.termsConditions),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const AppSectionHeader(title: 'Danger Zone'),
-                const SizedBox(height: 12),
-                _ProfileSectionCard(
-                  rows: [
-                    _ProfileRow(
-                      icon: Icons.delete_forever_rounded,
-                      label: 'Delete Account',
-                      iconBackgroundColor: _dangerSoftColor,
-                      iconColor: _dangerColor,
-                      labelColor: _dangerColor,
-                      onTap: () => showDeleteAccountSheet(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await ref.read(authControllerProvider.notifier).logout();
-                    if (context.mounted) {
-                      context.go(RoutePaths.login);
-                    }
-                  },
-                  icon: const Icon(Icons.logout_rounded),
-                  label: const Text('Log Out'),
-                ),
-                const SizedBox(height: 18),
-                Column(
-                  children: [
-                    Text(
-                      'Grabbit v1.0.0',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Member since ${profile.memberSince}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
       ),
     );
   }

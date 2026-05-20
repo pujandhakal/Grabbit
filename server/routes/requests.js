@@ -179,6 +179,8 @@ requestsRouter.get(
   async (req, res) => {
     try {
       const requests = await CustomerRequest.find({ customerId: req.user.userId })
+        .where("deletedAt")
+        .equals(null)
         .sort({ createdAt: -1 })
         .limit(50);
 
@@ -195,7 +197,7 @@ requestsRouter.get(
   async (req, res) => {
     try {
       const request = await CustomerRequest.findById(req.params.requestId);
-      if (!request) {
+      if (!request || request.deletedAt) {
         return res.status(404).json({ msg: "Request not found." });
       }
 
@@ -236,8 +238,12 @@ requestsRouter.post(
       }
 
       const request = await CustomerRequest.findById(req.params.requestId);
-      if (!request) {
+      if (!request || request.deletedAt) {
         return res.status(404).json({ msg: "Request not found." });
+      }
+
+      if (request.status === "completed") {
+        return res.status(400).json({ msg: "This request is already completed." });
       }
 
       const profile = await ShopProfile.findOne({ userId: req.user.userId });
@@ -303,7 +309,11 @@ requestsRouter.put(
       }
 
       const request = await CustomerRequest.findById(req.params.requestId);
-      if (!request || request.customerId.toString() !== req.user.userId) {
+      if (
+        !request ||
+        request.deletedAt ||
+        request.customerId.toString() !== req.user.userId
+      ) {
         return res.status(404).json({ msg: "Request not found." });
       }
 
@@ -343,6 +353,43 @@ requestsRouter.put(
   }
 );
 
+requestsRouter.delete(
+  "/api/requests/:requestId",
+  auth,
+  requireRole("customer"),
+  async (req, res) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.requestId)) {
+        return res.status(404).json({ msg: "Request not found." });
+      }
+
+      const request = await CustomerRequest.findOne({
+        _id: req.params.requestId,
+        customerId: req.user.userId,
+        deletedAt: null,
+      });
+
+      if (!request) {
+        return res.status(404).json({ msg: "Request not found." });
+      }
+
+      request.deletedAt = new Date();
+      await request.save();
+
+      const payload = {
+        requestId: request._id.toString(),
+      };
+      const io = req.app.get("io");
+      io.to(`user:${req.user.userId}`).emit("request:deleted", payload);
+      io.to(`category:${request.category}`).emit("request:deleted", payload);
+
+      return res.json({ ok: true });
+    } catch (error) {
+      return res.status(500).json({ err: error.message });
+    }
+  }
+);
+
 requestsRouter.put(
   "/api/requests/:requestId/responses/me",
   auth,
@@ -359,8 +406,12 @@ requestsRouter.put(
       }
 
       const request = await CustomerRequest.findById(req.params.requestId);
-      if (!request) {
+      if (!request || request.deletedAt) {
         return res.status(404).json({ msg: "Request not found." });
+      }
+
+      if (request.status === "completed") {
+        return res.status(400).json({ msg: "This request is already completed." });
       }
 
       const profile = await ShopProfile.findOne({ userId: req.user.userId });

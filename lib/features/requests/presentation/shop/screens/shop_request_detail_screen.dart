@@ -10,6 +10,7 @@ import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
 import 'package:grabbit/features/requests/data/repositories/api_requests_repository.dart';
 import 'package:grabbit/features/requests/domain/entities/create_shop_response_payload.dart';
+import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
 import 'package:grabbit/features/requests/domain/entities/shop_request.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 
@@ -53,6 +54,13 @@ class _ShopRequestDetailScreenState
   }
 
   Future<void> _submitResponse(ShopRequest request) async {
+    if (request.status == RequestStatus.completed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completed responses cannot be edited.')),
+      );
+      return;
+    }
+
     if (_priceController.text.trim().isEmpty ||
         _messageController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,7 +125,6 @@ class _ShopRequestDetailScreenState
         bottomSafeArea: true,
         header: AppScreenHeader(
           title: 'Request Detail',
-          subtitle: widget.requestId,
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: const Icon(Icons.chevron_left_rounded),
@@ -169,6 +176,8 @@ class _RequestResponseForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompleted = request.status == RequestStatus.completed;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
@@ -204,7 +213,11 @@ class _RequestResponseForm extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         AppSectionHeader(
-          title: request.hasResponded ? 'Edit response' : 'Your response',
+          title: isCompleted
+              ? 'Completed response'
+              : request.hasResponded
+                  ? 'Edit response'
+                  : 'Your response',
         ),
         const SizedBox(height: 12),
         AppSurfaceCard(
@@ -215,6 +228,7 @@ class _RequestResponseForm extends StatelessWidget {
               const SizedBox(height: 8),
               TextField(
                 controller: priceController,
+                readOnly: isCompleted,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(hintText: 'e.g. Rs. 2,200'),
               ),
@@ -226,6 +240,7 @@ class _RequestResponseForm extends StatelessWidget {
               const SizedBox(height: 8),
               TextField(
                 controller: messageController,
+                readOnly: isCompleted,
                 minLines: 3,
                 maxLines: 5,
                 decoration: const InputDecoration(
@@ -233,14 +248,32 @@ class _RequestResponseForm extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              AppPrimaryButton(
-                label: request.hasResponded ? 'Save Response' : 'Send Response',
-                icon: request.hasResponded
-                    ? Icons.edit_outlined
-                    : Icons.reply_outlined,
-                isLoading: isSubmitting,
-                onPressed: onSubmit,
-              ),
+              if (isCompleted)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.blueSoft,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    'This purchase is completed. Your response is kept for history and cannot be edited.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.blue,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                )
+              else
+                AppPrimaryButton(
+                  label:
+                      request.hasResponded ? 'Save Response' : 'Send Response',
+                  icon: request.hasResponded
+                      ? Icons.edit_outlined
+                      : Icons.reply_outlined,
+                  isLoading: isSubmitting,
+                  onPressed: onSubmit,
+                ),
               if (request.hasResponded && request.customerId.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 OutlinedButton.icon(

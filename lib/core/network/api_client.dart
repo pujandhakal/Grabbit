@@ -15,6 +15,9 @@ final httpClientProvider = Provider<http.Client>((ref) {
 
 final apiTokenProvider = StateProvider<String?>((ref) => null);
 
+const _serverConnectionMessage =
+    'No connection. Check your Wi-Fi or mobile data, then try again.';
+
 final apiClientProvider = Provider<ApiClient>((ref) {
   final config = ref.watch(appConfigProvider);
   final client = ref.watch(httpClientProvider);
@@ -47,8 +50,7 @@ class ApiClient {
       );
     } catch (_) {
       throw const AppException(
-        message:
-            'Unable to reach the server. Check the API base URL and try again.',
+        message: _serverConnectionMessage,
       );
     }
 
@@ -69,8 +71,7 @@ class ApiClient {
       );
     } catch (_) {
       throw const AppException(
-        message:
-            'Unable to reach the server. Check the API base URL and try again.',
+        message: _serverConnectionMessage,
       );
     }
 
@@ -91,8 +92,7 @@ class ApiClient {
       );
     } catch (_) {
       throw const AppException(
-        message:
-            'Unable to reach the server. Check the API base URL and try again.',
+        message: _serverConnectionMessage,
       );
     }
 
@@ -113,8 +113,7 @@ class ApiClient {
       );
     } catch (_) {
       throw const AppException(
-        message:
-            'Unable to reach the server. Check the API base URL and try again.',
+        message: _serverConnectionMessage,
       );
     }
 

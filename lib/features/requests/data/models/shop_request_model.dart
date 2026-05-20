@@ -1,4 +1,5 @@
 import 'package:grabbit/features/requests/domain/entities/shop_request.dart';
+import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
 
 class ShopRequestModel extends ShopRequest {
   const ShopRequestModel({
@@ -17,6 +18,7 @@ class ShopRequestModel extends ShopRequest {
     required super.responsePrice,
     required super.responseMessage,
     required super.respondedAgo,
+    super.status,
     super.customerId,
   });
 
@@ -38,6 +40,15 @@ class ShopRequestModel extends ShopRequest {
       responsePrice: map['responsePrice'] as String? ?? '',
       responseMessage: map['responseMessage'] as String? ?? '',
       respondedAgo: map['respondedAgo'] as String? ?? '',
+      status: _statusFromString(map['status'] as String?),
     );
+  }
+
+  static RequestStatus _statusFromString(String? value) {
+    return switch (value) {
+      'completed' => RequestStatus.completed,
+      'pending' => RequestStatus.pending,
+      _ => RequestStatus.active,
+    };
   }
 }

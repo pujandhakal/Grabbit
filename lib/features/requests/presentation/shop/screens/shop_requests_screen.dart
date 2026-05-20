@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
+import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
 import 'package:grabbit/features/requests/domain/entities/shop_request.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
+
+abstract final class _ShopRequestAssets {
+  static const envelope = 'assets/images/shop_envelope.svg';
+}
 
 class ShopRequestsScreen extends ConsumerWidget {
   const ShopRequestsScreen({super.key});
@@ -35,15 +41,9 @@ class ShopRequestsScreen extends ConsumerWidget {
         ),
         data: (items) {
           if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
+            return const _ShopRequestsEmptyState(
+              message:
                   'No matching requests yet. Add categories in your shop profile to receive requests.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
             );
           }
 
@@ -144,16 +144,7 @@ class _RequestsTabList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (requests.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            emptyMessage,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      );
+      return _ShopRequestsEmptyState(message: emptyMessage);
     }
 
     return ListView.separated(
@@ -167,6 +158,38 @@ class _RequestsTabList extends StatelessWidget {
   }
 }
 
+class _ShopRequestsEmptyState extends StatelessWidget {
+  const _ShopRequestsEmptyState({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              _ShopRequestAssets.envelope,
+              width: 156,
+              height: 116,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _IncomingRequestCard extends StatelessWidget {
   const _IncomingRequestCard({required this.request});
 
@@ -175,6 +198,7 @@ class _IncomingRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasResponded = request.hasResponded;
+    final isCompleted = request.status == RequestStatus.completed;
 
     return AppSurfaceCard(
       padding: EdgeInsets.zero,
@@ -197,10 +221,16 @@ class _IncomingRequestCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   AppStatusChip(
-                    label: hasResponded ? 'Responded' : request.age,
-                    tone: hasResponded
+                    label: isCompleted
+                        ? 'Completed'
+                        : hasResponded
+                            ? 'Responded'
+                            : request.age,
+                    tone: isCompleted
                         ? AppStatusTone.blue
-                        : AppStatusTone.primary,
+                        : hasResponded
+                            ? AppStatusTone.blue
+                            : AppStatusTone.primary,
                   ),
                 ],
               ),
@@ -251,9 +281,19 @@ class _IncomingRequestCard extends StatelessWidget {
                       RoutePaths.shopRequestDetailPath(request.id),
                     ),
                     icon: Icon(
-                      hasResponded ? Icons.edit_outlined : Icons.reply_outlined,
+                      isCompleted
+                          ? Icons.visibility_outlined
+                          : hasResponded
+                              ? Icons.edit_outlined
+                              : Icons.reply_outlined,
                     ),
-                    label: Text(hasResponded ? 'Edit Response' : 'Respond'),
+                    label: Text(
+                      isCompleted
+                          ? 'View Response'
+                          : hasResponded
+                              ? 'Edit Response'
+                              : 'Respond',
+                    ),
                   ),
                 ],
               ),

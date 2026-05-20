@@ -44,6 +44,7 @@ final realtimeConnectionProvider = Provider<void>((ref) {
     ..on('response:created', refreshRequests)
     ..on('response:updated', refreshRequests)
     ..on('request:updated', refreshRequests)
+    ..on('request:deleted', refreshRequests)
     ..on('message:new', handleIncomingMessage)
     ..connect();
 
@@ -53,6 +54,7 @@ final realtimeConnectionProvider = Provider<void>((ref) {
       ..off('response:created')
       ..off('response:updated')
       ..off('request:updated')
+      ..off('request:deleted')
       ..off('message:new')
       ..dispose();
   });

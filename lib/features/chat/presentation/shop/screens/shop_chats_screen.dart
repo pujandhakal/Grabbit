@@ -11,6 +11,7 @@ class ShopChatsScreen extends StatelessWidget {
       title: 'Shop Chats',
       subtitle: 'Customer conversations about requests and offers.',
       detailRoute: RoutePaths.shopChatDetail,
+      searchHint: 'Search by customer, request, or message...',
       emptyMessage:
           'No conversations yet. Respond to a request, then customers can message you.',
     );

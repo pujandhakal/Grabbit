@@ -2,6 +2,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
@@ -13,6 +14,10 @@ import 'package:grabbit/features/chat/data/repositories/chat_repository.dart';
 import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
 import 'package:grabbit/features/profile/domain/entities/shop_profile.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
+
+abstract final class _ShopAssets {
+  static const businessAnalytics = 'assets/images/shop_business_analytics.svg';
+}
 
 class ShopDashboardScreen extends ConsumerWidget {
   const ShopDashboardScreen({super.key});
@@ -113,124 +118,135 @@ class _CollapsibleShopHeader extends StatelessWidget {
     final subtitleGap = lerpDouble(0, 4, t)!;
     final chipsGap = lerpDouble(0, 10, t)!;
     final alignY = lerpDouble(0, 1, t)!;
+    final backgroundOpacity = lerpDouble(0.42, 0.96, 1 - t)!;
     final shopName = profile?.businessName ?? 'My Shop';
     final initials = profile?.initials ?? 'MS';
     final categoryText = profile?.categories.isNotEmpty == true
         ? profile!.categories.take(2).join(' & ')
         : 'Set up your store categories';
 
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: Align(
-          alignment: Alignment(-1, alignY),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  CircleAvatar(
-                    radius: avatarRadius,
-                    backgroundColor: AppColors.primarySoft,
-                    child: Text(
-                      initials,
-                      style: TextStyle(
-                        color: AppColors.primaryDark,
-                        fontWeight: FontWeight.w800,
-                        fontSize: lerpDouble(12, 16, t),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: -4,
-                    top: -6,
-                    child: IgnorePointer(
-                      ignoring: t < 0.5,
-                      child: Opacity(
-                        opacity: t,
-                        child: Container(
-                          width: 22,
-                          height: 22,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: profile?.isVerified == true
-                                ? AppColors.primary
-                                : AppColors.accent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            profile?.isVerified == true
-                                ? Icons.check_rounded
-                                : Icons.priority_high_rounded,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.background.withValues(alpha: backgroundOpacity),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.outline.withValues(alpha: 1 - t),
+          ),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Align(
+            alignment: Alignment(-1, alignY),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    Text(
-                      shopName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    SizedBox(height: subtitleGap),
-                    ClipRect(
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        heightFactor: t,
-                        child: Opacity(
-                          opacity: t,
-                          child: Text(
-                            categoryText,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
+                    CircleAvatar(
+                      radius: avatarRadius,
+                      backgroundColor: AppColors.primarySoft,
+                      child: Text(
+                        initials,
+                        style: TextStyle(
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: lerpDouble(12, 16, t),
                         ),
                       ),
                     ),
-                    SizedBox(height: chipsGap),
-                    ClipRect(
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        heightFactor: t,
+                    Positioned(
+                      right: -4,
+                      top: -6,
+                      child: IgnorePointer(
+                        ignoring: t < 0.5,
                         child: Opacity(
                           opacity: t,
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              AppStatusChip(
-                                label: profile?.isVerified == true
-                                    ? 'Verified'
-                                    : 'Needs setup',
-                              ),
-                              if ((profile?.openStatus ?? '').isNotEmpty)
-                                AppStatusChip(
-                                  label: profile!.openStatus,
-                                  tone: AppStatusTone.blue,
-                                ),
-                            ],
+                          child: Container(
+                            width: 22,
+                            height: 22,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: profile?.isVerified == true
+                                  ? AppColors.primary
+                                  : AppColors.accent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              profile?.isVerified == true
+                                  ? Icons.check_rounded
+                                  : Icons.priority_high_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        shopName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(height: subtitleGap),
+                      ClipRect(
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          heightFactor: t,
+                          child: Opacity(
+                            opacity: t,
+                            child: Text(
+                              categoryText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: chipsGap),
+                      ClipRect(
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          heightFactor: t,
+                          child: Opacity(
+                            opacity: t,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                AppStatusChip(
+                                  label: profile?.isVerified == true
+                                      ? 'Verified'
+                                      : 'Needs setup',
+                                ),
+                                if ((profile?.openStatus ?? '').isNotEmpty)
+                                  AppStatusChip(
+                                    label: profile!.openStatus,
+                                    tone: AppStatusTone.blue,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -253,60 +269,218 @@ class _StoreStatusCard extends StatelessWidget {
         : 'Complete your public store details so customers can trust your responses.';
 
     return AppSurfaceCard(
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconBadge(
-            icon: isVerified
-                ? Icons.storefront_outlined
-                : Icons.verified_outlined,
-            backgroundColor:
-                isVerified ? AppColors.primarySoft : AppColors.accentSoft,
-            foregroundColor:
-                isVerified ? AppColors.primaryDark : AppColors.accent,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppIconBadge(
+                icon: isVerified
+                    ? Icons.storefront_outlined
+                    : Icons.verified_outlined,
+                backgroundColor:
+                    isVerified ? AppColors.primarySoft : AppColors.accentSoft,
+                foregroundColor:
+                    isVerified ? AppColors.primaryDark : AppColors.accent,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        AppStatusChip(
+                          label: isVerified ? 'Verified' : 'Incomplete',
+                          tone: isVerified
+                              ? AppStatusTone.primary
+                              : AppStatusTone.accent,
+                        ),
+                      ],
                     ),
-                    AppStatusChip(
-                      label: isVerified ? 'Verified' : 'Incomplete',
-                      tone: isVerified
-                          ? AppStatusTone.primary
-                          : AppStatusTone.accent,
+                    const SizedBox(height: 6),
+                    Text(body, style: Theme.of(context).textTheme.bodyMedium),
+                    if (profileAsync.isLoading) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Checking store status...',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: () => context.go(RoutePaths.shopProfile),
+                      icon: const Icon(Icons.storefront_outlined),
+                      label: Text(
+                          isVerified ? 'Manage Store' : 'Complete Details'),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(body, style: Theme.of(context).textTheme.bodyMedium),
-                if (profileAsync.isLoading) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    'Checking store status...',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: () => context.go(RoutePaths.shopProfile),
-                  icon: const Icon(Icons.storefront_outlined),
-                  label: Text(isVerified ? 'Manage Store' : 'Complete Details'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              SizedBox(
+                width: 112,
+                height: 76,
+                child: SvgPicture.asset(
+                  _ShopAssets.businessAnalytics,
+                  fit: BoxFit.contain,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: SizedBox(
+                  height: 64,
+                  child: _ShopResponseFlowAnimation(),
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ShopResponseFlowAnimation extends StatefulWidget {
+  const _ShopResponseFlowAnimation();
+
+  @override
+  State<_ShopResponseFlowAnimation> createState() =>
+      _ShopResponseFlowAnimationState();
+}
+
+class _ShopResponseFlowAnimationState extends State<_ShopResponseFlowAnimation>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+      value: 0.12,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final mediaQuery = MediaQuery.maybeOf(context);
+    final shouldReduceMotion = (mediaQuery?.disableAnimations ?? false) ||
+        (mediaQuery?.accessibleNavigation ?? false);
+
+    if (shouldReduceMotion) {
+      _controller.stop();
+      _controller.value = 0.58;
+      return;
+    }
+
+    if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft.withValues(alpha: 0.52),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.12),
+        ),
+      ),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final progress = Curves.easeInOut.transform(_controller.value);
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                left: 14,
+                child: _FlowNode(
+                  icon: Icons.person_outline_rounded,
+                  color: AppColors.blue,
+                  active: _controller.value < 0.55,
+                ),
+              ),
+              Positioned(
+                right: 14,
+                child: _FlowNode(
+                  icon: Icons.storefront_outlined,
+                  color: AppColors.primaryDark,
+                  active: _controller.value >= 0.45,
+                ),
+              ),
+              Positioned(
+                left: 52 + (progress * 58),
+                child: Container(
+                  width: 11,
+                  height: 11,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accent.withValues(alpha: 0.26),
+                        blurRadius: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FlowNode extends StatelessWidget {
+  const _FlowNode({
+    required this.icon,
+    required this.color,
+    required this.active,
+  });
+
+  final IconData icon;
+  final Color color;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: active ? 44 : 38,
+      height: active ? 44 : 38,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: active ? 0.16 : 0.10),
+        borderRadius: BorderRadius.circular(16),
+        border:
+            Border.all(color: color.withValues(alpha: active ? 0.30 : 0.14)),
+      ),
+      child: Icon(icon, color: color, size: 21),
     );
   }
 }

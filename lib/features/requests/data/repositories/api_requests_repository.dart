@@ -79,6 +79,11 @@ class ApiRequestsRepository implements RequestsRepository {
   }
 
   @override
+  Future<void> deleteRequest(String requestId) async {
+    await _apiClient.delete('/api/requests/$requestId', body: const {});
+  }
+
+  @override
   Future<List<ShopRequest>> fetchShopRequests() async {
     final data = await _apiClient.get('/api/shop/requests');
     final items = data['requests'];

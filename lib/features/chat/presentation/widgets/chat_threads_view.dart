@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:grabbit/app/application/app_data_refresh.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/network/connectivity_status.dart';
+import 'package:grabbit/core/widgets/app_error_state.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
@@ -15,6 +18,7 @@ class ChatThreadsView extends ConsumerStatefulWidget {
     required this.subtitle,
     required this.detailRoute,
     this.emptyMessage = 'No conversations yet.',
+    this.searchHint = 'Search by shop, request, or message...',
     super.key,
   });
 
@@ -22,6 +26,7 @@ class ChatThreadsView extends ConsumerStatefulWidget {
   final String subtitle;
   final String detailRoute;
   final String emptyMessage;
+  final String searchHint;
 
   @override
   ConsumerState<ChatThreadsView> createState() => _ChatThreadsViewState();
@@ -40,6 +45,7 @@ class _ChatThreadsViewState extends ConsumerState<ChatThreadsView> {
   @override
   Widget build(BuildContext context) {
     final threads = ref.watch(chatThreadsProvider);
+    final hasNetwork = ref.watch(networkConnectionProvider).valueOrNull ?? true;
 
     return AppStickyPage(
       bottomSafeArea: true,
@@ -54,12 +60,24 @@ class _ChatThreadsViewState extends ConsumerState<ChatThreadsView> {
               controller: _searchController,
               onChanged: (value) {
                 setState(() {
-                  _query = value.trim().toLowerCase();
+                  _query = value.trim();
                 });
               },
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Search chats...',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear search',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _query = '';
+                          });
+                        },
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                hintText: widget.searchHint,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -69,52 +87,63 @@ class _ChatThreadsViewState extends ConsumerState<ChatThreadsView> {
           ),
         ),
       ),
-      child: threads.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'Unable to load chats.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        ),
-        data: (items) {
-          final filtered = _filtered(items);
-          if (items.isEmpty) {
-            return _EmptyChatState(message: widget.emptyMessage);
-          }
-          if (filtered.isEmpty) {
-            return const _EmptyChatState(
-                message: 'No chats match your search.');
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(chatThreadsProvider);
-              await ref.read(chatThreadsProvider.future);
-            },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
-              children: [
-                AppSectionHeader(
-                  title: 'Recent conversations (${filtered.length})',
+      child: !hasNetwork
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: AppErrorState.offline(
+                  onRetry: () => refreshSignedInData(ref),
                 ),
-                const SizedBox(height: 14),
-                for (final thread in filtered) ...[
-                  _ChatThreadTile(
-                    thread: thread,
-                    onTap: () => _openThread(context, thread),
+              ),
+            )
+          : threads.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: AppErrorState.fromError(
+                    error: error,
+                    fallbackTitle: 'Unable to load chats',
+                    fallbackMessage: 'Unable to load chats.',
+                    onRetry: () => refreshSignedInData(ref),
                   ),
-                  const SizedBox(height: 12),
-                ],
-              ],
+                ),
+              ),
+              data: (items) {
+                final filtered = _filtered(items);
+                if (items.isEmpty) {
+                  return _EmptyChatState(message: widget.emptyMessage);
+                }
+                if (filtered.isEmpty) {
+                  return _EmptyChatState(
+                    message: 'No chats found for "$_query".',
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(chatThreadsProvider);
+                    await ref.read(chatThreadsProvider.future);
+                  },
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
+                    children: [
+                      AppSectionHeader(
+                        title: 'Recent conversations (${filtered.length})',
+                      ),
+                      const SizedBox(height: 14),
+                      for (final thread in filtered) ...[
+                        _ChatThreadTile(
+                          thread: thread,
+                          onTap: () => _openThread(context, thread),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -122,10 +151,11 @@ class _ChatThreadsViewState extends ConsumerState<ChatThreadsView> {
     if (_query.isEmpty) {
       return items;
     }
+    final normalizedQuery = _query.toLowerCase();
     return items.where((thread) {
-      return thread.peerName.toLowerCase().contains(_query) ||
-          thread.requestTitle.toLowerCase().contains(_query) ||
-          thread.lastMessage.toLowerCase().contains(_query);
+      return thread.peerName.toLowerCase().contains(normalizedQuery) ||
+          thread.requestTitle.toLowerCase().contains(normalizedQuery) ||
+          thread.lastMessage.toLowerCase().contains(normalizedQuery);
     }).toList(growable: false);
   }
 

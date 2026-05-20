@@ -64,6 +64,7 @@ function shopRequestDto(request, response) {
     customerName: "Customer",
     isNew: true,
     isUrgent: request.urgency === "need_soon",
+    status: request.status,
     hasResponded: Boolean(response),
     responsePrice: response?.price || "",
     responseMessage: response?.message || "",
@@ -229,24 +230,50 @@ shopRouter.get(
       const profile = await ShopProfile.findOne({ userId: req.user.userId });
       const categories = profile?.categories || [];
 
-      if (categories.length === 0) {
+      const ownResponses = await ShopResponse.find({
+        shopUserId: req.user.userId,
+      })
+        .sort({ updatedAt: -1 })
+        .limit(50);
+      const ownResponseRequestIds = ownResponses.map(
+        (response) => response.requestId
+      );
+
+      const visibilityFilters = [];
+      if (categories.length > 0) {
+        visibilityFilters.push({
+          category: { $in: categories },
+          status: { $in: ["active", "pending"] },
+        });
+      }
+      if (ownResponseRequestIds.length > 0) {
+        visibilityFilters.push({ _id: { $in: ownResponseRequestIds } });
+      }
+
+      if (visibilityFilters.length === 0) {
         return res.json({ requests: [] });
       }
 
       const requests = await CustomerRequest.find({
-        category: { $in: categories },
-        status: { $in: ["active", "pending"] },
+        deletedAt: null,
+        $or: visibilityFilters,
       })
         .sort({ createdAt: -1 })
         .limit(50);
 
       const requestIds = requests.map((request) => request._id);
-      const responses = await ShopResponse.find({
+      const responses = ownResponses.filter((response) =>
+        requestIds.some((requestId) => requestId.equals(response.requestId))
+      );
+      const missingResponses = await ShopResponse.find({
         requestId: { $in: requestIds },
         shopUserId: req.user.userId,
       });
       const responsesByRequestId = new Map(
-        responses.map((response) => [response.requestId.toString(), response])
+        [...responses, ...missingResponses].map((response) => [
+          response.requestId.toString(),
+          response,
+        ])
       );
 
       return res.json({

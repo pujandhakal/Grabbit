@@ -85,6 +85,9 @@ class MockRequestsRepository implements RequestsRepository {
   }
 
   @override
+  Future<void> deleteRequest(String requestId) async {}
+
+  @override
   Future<List<ShopRequest>> fetchShopRequests() async {
     return const [
       ShopRequest(
@@ -123,6 +126,24 @@ class MockRequestsRepository implements RequestsRepository {
         responseMessage:
             'We have a shockproof clear case in stock with raised edges and camera protection.',
         respondedAgo: '8 mins ago',
+      ),
+      ShopRequest(
+        id: 'completed-book-purchase',
+        title: 'Second-hand textbooks',
+        subtitle: 'Customer completed this purchase after your response.',
+        description: 'Looking for used Grade 10 textbooks in good condition.',
+        category: 'Books',
+        budget: 'Rs. 1,200',
+        age: '1 day ago',
+        distance: 'Kathmandu, Baneshwor',
+        customerName: 'Customer',
+        isNew: false,
+        isUrgent: false,
+        hasResponded: true,
+        responsePrice: 'Rs. 1,000',
+        responseMessage: 'We kept the book set ready for pickup.',
+        respondedAgo: '1 day ago',
+        status: RequestStatus.completed,
       ),
     ];
   }

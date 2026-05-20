@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
@@ -17,6 +18,10 @@ import 'package:latlong2/latlong.dart';
 
 const _dangerColor = Color(0xFFE5484D);
 const _dangerSoftColor = Color(0xFFFFECEE);
+
+abstract final class _ShopProfileAssets {
+  static const productExplainer = 'assets/images/shop_product_explainer.svg';
+}
 
 const _categories = [
   'Groceries',
@@ -517,6 +522,7 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppSurfaceCard(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
@@ -536,6 +542,16 @@ class _StatusCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 14),
+          SizedBox(
+            width: 92,
+            height: 74,
+            child: SvgPicture.asset(
+              _ShopProfileAssets.productExplainer,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(width: 10),
           AppStatusChip(
             label: isVerified ? 'Verified' : 'Incomplete',
             tone: isVerified ? AppStatusTone.primary : AppStatusTone.accent,

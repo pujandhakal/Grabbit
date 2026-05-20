@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:grabbit/app/application/app_data_refresh.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
@@ -24,6 +25,7 @@ class RequestResponsesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final responses = ref.watch(requestResponsesProvider(requestId));
+    final request = responses.valueOrNull?.request;
     final subtitle = responses.maybeWhen(
       data: (data) => '${data.responses.length} shops have responded',
       orElse: () => 'Loading shop responses',
@@ -38,6 +40,13 @@ class RequestResponsesScreen extends ConsumerWidget {
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          trailing: IconButton(
+            tooltip: 'Delete request',
+            onPressed: request == null
+                ? null
+                : () => _deleteRequest(context, ref, request),
+            icon: const Icon(Icons.delete_outline_rounded),
           ),
         ),
         child: responses.when(
@@ -76,6 +85,51 @@ class RequestResponsesScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteRequest(
+    BuildContext context,
+    WidgetRef ref,
+    RequestSummary request,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete request?'),
+        content: Text(
+          'This will remove "${request.title}" from your requests. Shops will no longer see it in incoming requests.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(requestsRepositoryProvider).deleteRequest(request.id);
+      refreshSignedInData(ref);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request deleted.')),
+      );
+      context.pop();
+    } catch (error) {
+      if (!context.mounted) return;
+      final message =
+          error is AppException ? error.message : 'Unable to delete request.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 }
 
