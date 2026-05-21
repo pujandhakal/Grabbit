@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/application/app_data_refresh.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/core/network/connectivity_status.dart';
 import 'package:grabbit/core/widgets/app_error_state.dart';
@@ -32,10 +33,6 @@ class RequestsScreen extends ConsumerWidget {
         header: AppScreenHeader(
           title: 'My Requests',
           subtitle: 'Track live responses and request status updates.',
-          trailing: IconButton(
-            onPressed: () => context.push(RoutePaths.postRequest),
-            icon: const Icon(Icons.add_circle_outline_rounded),
-          ),
         ),
         child: !hasNetwork
             ? Center(
@@ -276,21 +273,42 @@ class _RequestCard extends StatelessWidget {
       RequestStatus.completed => AppStatusTone.blue,
     };
     final icon = switch (item.category) {
-      'Clothing' => Icons.checkroom_outlined,
-      'Sports' => Icons.directions_run_outlined,
-      'Books' => Icons.menu_book_outlined,
+      RequestCategories.fashionClothing => Icons.checkroom_outlined,
+      RequestCategories.electronicsMobileAccessories => Icons.devices_rounded,
+      RequestCategories.groceriesFood => Icons.local_grocery_store_outlined,
+      RequestCategories.beautyPersonalCare => Icons.spa_outlined,
+      RequestCategories.homeKitchenAppliances => Icons.kitchen_outlined,
+      RequestCategories.healthPharmacy => Icons.local_pharmacy_outlined,
+      RequestCategories.booksStationery => Icons.menu_book_outlined,
+      RequestCategories.babyKids => Icons.child_friendly_outlined,
+      RequestCategories.sportsFitness => Icons.directions_run_outlined,
+      RequestCategories.giftsLifestyle => Icons.card_giftcard_outlined,
       _ => Icons.receipt_long_outlined,
     };
     final badgeColor = switch (item.category) {
-      'Clothing' => AppColors.accentSoft,
-      'Sports' => AppColors.primarySoft,
-      'Books' => AppColors.blueSoft,
+      RequestCategories.fashionClothing => AppColors.accentSoft,
+      RequestCategories.electronicsMobileAccessories => AppColors.blueSoft,
+      RequestCategories.groceriesFood => AppColors.primarySoft,
+      RequestCategories.beautyPersonalCare => AppColors.accentSoft,
+      RequestCategories.homeKitchenAppliances => AppColors.blueSoft,
+      RequestCategories.healthPharmacy => AppColors.primarySoft,
+      RequestCategories.booksStationery => AppColors.blueSoft,
+      RequestCategories.babyKids => AppColors.accentSoft,
+      RequestCategories.sportsFitness => AppColors.primarySoft,
+      RequestCategories.giftsLifestyle => AppColors.accentSoft,
       _ => AppColors.primarySoft,
     };
     final badgeForeground = switch (item.category) {
-      'Clothing' => AppColors.accent,
-      'Sports' => AppColors.primaryDark,
-      'Books' => AppColors.blue,
+      RequestCategories.fashionClothing => AppColors.accent,
+      RequestCategories.electronicsMobileAccessories => AppColors.blue,
+      RequestCategories.groceriesFood => AppColors.primaryDark,
+      RequestCategories.beautyPersonalCare => AppColors.accent,
+      RequestCategories.homeKitchenAppliances => AppColors.blue,
+      RequestCategories.healthPharmacy => AppColors.primaryDark,
+      RequestCategories.booksStationery => AppColors.blue,
+      RequestCategories.babyKids => AppColors.accent,
+      RequestCategories.sportsFitness => AppColors.primaryDark,
+      RequestCategories.giftsLifestyle => AppColors.accent,
       _ => AppColors.primaryDark,
     };
 

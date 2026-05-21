@@ -12,6 +12,7 @@ import 'package:grabbit/core/widgets/app_surface_card.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:grabbit/features/profile/data/repositories/customer_profile_repository.dart';
 import 'package:grabbit/features/profile/presentation/widgets/delete_account_sheet.dart';
+import 'package:grabbit/features/profile/presentation/widgets/logout_confirmation_dialog.dart';
 
 const _dangerColor = Color(0xFFE5484D);
 const _dangerSoftColor = Color(0xFFFFECEE);
@@ -153,6 +154,11 @@ class ProfileScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
                       OutlinedButton.icon(
                         onPressed: () async {
+                          final confirmed =
+                              await showLogoutConfirmationDialog(context);
+                          if (!confirmed || !context.mounted) {
+                            return;
+                          }
                           await ref
                               .read(authControllerProvider.notifier)
                               .logout();

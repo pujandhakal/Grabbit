@@ -13,6 +13,7 @@ import 'package:grabbit/features/home/presentation/screens/home_screen.dart';
 import 'package:grabbit/features/profile/presentation/screens/profile_screen.dart';
 import 'package:grabbit/features/profile/presentation/screens/customer_profile_detail_screens.dart';
 import 'package:grabbit/features/profile/presentation/shop/screens/shop_profile_screen.dart';
+import 'package:grabbit/features/profile/presentation/shop/screens/shop_settings_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/post_request_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/request_responses_screen.dart';
 import 'package:grabbit/features/requests/presentation/screens/requests_screen.dart';
@@ -231,8 +232,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.postRequest,
-        pageBuilder: (context, state) =>
-            fadeSlidePage(state: state, child: const PostRequestScreen()),
+        pageBuilder: (context, state) => fadeSlidePage(
+          state: state,
+          child: PostRequestScreen(
+            initialCategory: state.uri.queryParameters['category'],
+          ),
+        ),
       ),
       GoRoute(
         path: RoutePaths.storeDetails,
@@ -257,6 +262,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 RoutePaths.defaultRequestId,
           ),
         ),
+      ),
+      GoRoute(
+        path: RoutePaths.shopSettings,
+        pageBuilder: (context, state) =>
+            fadeSlidePage(state: state, child: const ShopSettingsScreen()),
       ),
       GoRoute(
         path: RoutePaths.shopChatDetail,

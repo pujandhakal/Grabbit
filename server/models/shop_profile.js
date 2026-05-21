@@ -74,6 +74,10 @@ const shopProfileSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    showAllRequests: {
+      type: Boolean,
+      default: true,
+    },
     verifiedAt: {
       type: Date,
     },

@@ -4,6 +4,10 @@ const ShopProfile = require("../models/shop_profile");
 const ShopReview = require("../models/shop_review");
 const ShopResponse = require("../models/shop_response");
 const { auth, requireRole } = require("../middleware/auth");
+const {
+  normalizeCategories,
+  categoriesWithAliases,
+} = require("../utils/request_categories");
 
 const shopRouter = express.Router();
 
@@ -83,7 +87,9 @@ function isProfileComplete(profile) {
       profile.closingTime &&
       profile.typicalResponseTime &&
       profile.categories?.length > 0 &&
-      profile.specialties?.length > 0
+      profile.specialties?.length > 0 &&
+      profile.latitude != null &&
+      profile.longitude != null
   );
 }
 
@@ -112,7 +118,7 @@ function profileUpdateFromBody(reqBody) {
   const profile = {
     businessName,
     initials: initialsFor(businessName),
-    categories,
+    categories: normalizeCategories(categories),
     addressText,
     phone,
     description,
@@ -221,15 +227,31 @@ shopRouter.put(
   }
 );
 
+shopRouter.put(
+  "/api/shop/settings",
+  auth,
+  requireRole("shop"),
+  async (req, res) => {
+    try {
+      const profile = await ShopProfile.findOneAndUpdate(
+        { userId: req.user.userId },
+        { $set: { showAllRequests: Boolean(req.body.showAllRequests) } },
+        { new: true, upsert: true }
+      );
+
+      return res.json({ profile });
+    } catch (error) {
+      return res.status(500).json({ err: error.message });
+    }
+  }
+);
+
 shopRouter.get(
   "/api/shop/requests",
   auth,
   requireRole("shop"),
   async (req, res) => {
     try {
-      const profile = await ShopProfile.findOne({ userId: req.user.userId });
-      const categories = profile?.categories || [];
-
       const ownResponses = await ShopResponse.find({
         shopUserId: req.user.userId,
       })
@@ -239,19 +261,21 @@ shopRouter.get(
         (response) => response.requestId
       );
 
-      const visibilityFilters = [];
-      if (categories.length > 0) {
-        visibilityFilters.push({
-          category: { $in: categories },
-          status: { $in: ["active", "pending"] },
-        });
-      }
-      if (ownResponseRequestIds.length > 0) {
-        visibilityFilters.push({ _id: { $in: ownResponseRequestIds } });
+      const profile = await ShopProfile.findOne({ userId: req.user.userId });
+
+      // When the shop opts out of "show all", limit new requests to their
+      // selected categories. Their own responded requests stay visible either
+      // way so they can still view/edit them.
+      const activeFilter = { status: { $in: ["active", "pending"] } };
+      if (profile?.showAllRequests !== true) {
+        activeFilter.category = {
+          $in: categoriesWithAliases(profile?.categories || []),
+        };
       }
 
-      if (visibilityFilters.length === 0) {
-        return res.json({ requests: [] });
+      const visibilityFilters = [activeFilter];
+      if (ownResponseRequestIds.length > 0) {
+        visibilityFilters.push({ _id: { $in: ownResponseRequestIds } });
       }
 
       const requests = await CustomerRequest.find({

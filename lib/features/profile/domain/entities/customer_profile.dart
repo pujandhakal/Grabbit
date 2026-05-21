@@ -1,5 +1,6 @@
 import 'package:grabbit/features/auth/data/models/user_model.dart';
 import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
+import 'package:grabbit/core/config/request_categories.dart';
 
 class CustomerProfile {
   const CustomerProfile({
@@ -158,8 +159,9 @@ class CustomerPreferences {
 
   factory CustomerPreferences.fromMap(Map<String, dynamic> map) {
     return CustomerPreferences(
-      categories:
-          (map['categories'] as List? ?? const []).whereType<String>().toList(),
+      categories: RequestCategories.normalizeList(
+        (map['categories'] as List? ?? const []).whereType<String>(),
+      ),
       budgetMin: (map['budgetMin'] as num?)?.toInt(),
       budgetMax: (map['budgetMax'] as num?)?.toInt(),
       searchRadiusKm: (map['searchRadiusKm'] as num?)?.toInt() ?? 5,

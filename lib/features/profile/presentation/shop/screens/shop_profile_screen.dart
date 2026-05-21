@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
@@ -13,33 +13,22 @@ import 'package:grabbit/core/widgets/app_surface_card.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
 import 'package:grabbit/features/profile/presentation/widgets/delete_account_sheet.dart';
+import 'package:grabbit/features/profile/presentation/widgets/logout_confirmation_dialog.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 const _dangerColor = Color(0xFFE5484D);
 const _dangerSoftColor = Color(0xFFFFECEE);
 
-abstract final class _ShopProfileAssets {
-  static const productExplainer = 'assets/images/shop_product_explainer.svg';
-}
-
-const _categories = [
-  'Groceries',
-  'Electronics',
-  'Clothing',
-  'Food & Beverages',
-  'Health',
-  'Sports',
-  'Other',
-];
-
 const _specialtyOptions = [
-  'Electronics',
-  'Accessories',
-  'Repairs',
   'Fashion',
   'Footwear',
-  'Groceries',
+  'Mobile Accessories',
+  'Beauty Products',
+  'Home Appliances',
+  'Groceries & Food',
+  'Pharmacy',
+  'Repairs',
   'Home Delivery',
   'Fast Response',
 ];
@@ -146,6 +135,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
         initialValue: controller.text,
         hint: hint,
         keyboardType: keyboardType,
+        required: true,
       ),
     );
     if (result != null) {
@@ -172,6 +162,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
         title: title,
         initialValue: controller.text,
         hint: hint,
+        required: true,
       ),
     );
     if (result != null) {
@@ -224,6 +215,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
         title: title,
         options: options,
         initialSelected: current,
+        required: true,
       ),
     );
     if (result != null) {
@@ -267,6 +259,11 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
         subtitle: isVerified
             ? 'Manage the public details customers see after View Store.'
             : 'Complete public details customers see after View Store.',
+        trailing: IconButton(
+          tooltip: 'Settings',
+          onPressed: () => context.push(RoutePaths.shopSettings),
+          icon: const Icon(Icons.settings_outlined),
+        ),
       ),
       child: profile.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -301,10 +298,46 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
             _initialized = true;
           }
 
+          // Live completeness of the 10 fields the backend uses to auto-verify
+          // (see server/routes/shop.js isProfileComplete). Computed from local
+          // state so progress updates immediately as the shop edits each field.
+          final hasBusinessName =
+              _businessNameController.text.trim().isNotEmpty;
+          final hasPhone = _phoneController.text.trim().isNotEmpty;
+          final hasDescription = _descriptionController.text.trim().isNotEmpty;
+          final hasAddress = _addressController.text.trim().isNotEmpty;
+          final hasLandmark = _landmarkController.text.trim().isNotEmpty;
+          final hasOpenStatus = _openStatus.trim().isNotEmpty;
+          final hasClosingTime = _closingTimeController.text.trim().isNotEmpty;
+          final hasResponseTime =
+              _responseTimeController.text.trim().isNotEmpty;
+          final hasCategories = _selectedCategories.isNotEmpty;
+          final hasSpecialties = _selectedSpecialties.isNotEmpty;
+          final hasMapPin = _latitude != null && _longitude != null;
+
+          const totalSteps = 11;
+          final completedSteps = [
+            hasBusinessName,
+            hasPhone,
+            hasDescription,
+            hasAddress,
+            hasLandmark,
+            hasMapPin,
+            hasOpenStatus,
+            hasClosingTime,
+            hasResponseTime,
+            hasCategories,
+            hasSpecialties,
+          ].where((done) => done).length;
+
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              _StatusCard(isVerified: profile.isVerified),
+              _VerificationProgressCard(
+                isVerified: profile.isVerified,
+                completedSteps: completedSteps,
+                totalSteps: totalSteps,
+              ),
               const SizedBox(height: 20),
               const _SectionTitle('Business'),
               const SizedBox(height: 8),
@@ -314,6 +347,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.storefront_rounded,
                     label: 'Business name',
                     value: _valueOr(_businessNameController.text),
+                    isComplete: hasBusinessName,
                     onTap: () => _editText(
                       title: 'Business name',
                       controller: _businessNameController,
@@ -324,6 +358,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.phone_rounded,
                     label: 'Phone',
                     value: _valueOr(_phoneController.text),
+                    isComplete: hasPhone,
                     onTap: () => _editText(
                       title: 'Phone',
                       controller: _phoneController,
@@ -338,6 +373,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                       _descriptionController.text,
                       truncate: 60,
                     ),
+                    isComplete: hasDescription,
                     onTap: () => _editLongText(
                       title: 'Store description',
                       controller: _descriptionController,
@@ -355,6 +391,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.location_on_outlined,
                     label: 'Address',
                     value: _valueOr(_addressController.text),
+                    isComplete: hasAddress,
                     onTap: () => _editText(
                       title: 'Address',
                       controller: _addressController,
@@ -365,6 +402,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.flag_outlined,
                     label: 'Landmark',
                     value: _valueOr(_landmarkController.text),
+                    isComplete: hasLandmark,
                     onTap: () => _editText(
                       title: 'Landmark',
                       controller: _landmarkController,
@@ -374,7 +412,8 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                   _SettingsRow(
                     icon: Icons.map_outlined,
                     label: 'Pin on map',
-                    value: _latitude != null && _longitude != null
+                    isComplete: hasMapPin,
+                    value: hasMapPin
                         ? 'Lat ${_latitude!.toStringAsFixed(5)}, '
                             'Lng ${_longitude!.toStringAsFixed(5)}'
                         : 'Not set',
@@ -392,6 +431,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     iconColor: AppColors.primaryDark,
                     label: 'Open status',
                     value: _openStatus,
+                    isComplete: hasOpenStatus,
                     onTap: () => _editChoice(
                       title: 'Open status',
                       options: _openStatusOptions,
@@ -403,6 +443,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.schedule_rounded,
                     label: 'Closing time',
                     value: _valueOr(_closingTimeController.text),
+                    isComplete: hasClosingTime,
                     onTap: () => _editText(
                       title: 'Closing time',
                       controller: _closingTimeController,
@@ -413,6 +454,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.bolt_rounded,
                     label: 'Typical response time',
                     value: _valueOr(_responseTimeController.text),
+                    isComplete: hasResponseTime,
                     onTap: () => _editText(
                       title: 'Typical response time',
                       controller: _responseTimeController,
@@ -430,9 +472,10 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.category_outlined,
                     label: 'Matching categories',
                     value: _summarizeSet(_selectedCategories),
+                    isComplete: hasCategories,
                     onTap: () => _editMultiSelect(
                       title: 'Matching categories',
-                      options: _categories,
+                      options: RequestCategories.all,
                       current: _selectedCategories,
                       onSaved: (next) {
                         _selectedCategories
@@ -445,6 +488,7 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                     icon: Icons.auto_awesome_outlined,
                     label: 'Specialties',
                     value: _summarizeSet(_selectedSpecialties),
+                    isComplete: hasSpecialties,
                     onTap: () => _editMultiSelect(
                       title: 'Specialties shown to customers',
                       options: _specialtyOptions,
@@ -482,6 +526,10 @@ class _ShopProfileScreenState extends ConsumerState<ShopProfileScreen> {
                 const SizedBox(height: 24),
               OutlinedButton.icon(
                 onPressed: () async {
+                  final confirmed = await showLogoutConfirmationDialog(context);
+                  if (!confirmed || !context.mounted) {
+                    return;
+                  }
                   await ref.read(authControllerProvider.notifier).logout();
                   if (context.mounted) {
                     context.go(RoutePaths.login);
@@ -513,48 +561,93 @@ String _summarizeSet(Set<String> values) {
   return '${values.length} selected';
 }
 
-class _StatusCard extends StatelessWidget {
-  const _StatusCard({required this.isVerified});
+class _VerificationProgressCard extends StatelessWidget {
+  const _VerificationProgressCard({
+    required this.isVerified,
+    required this.completedSteps,
+    required this.totalSteps,
+  });
 
   final bool isVerified;
+  final int completedSteps;
+  final int totalSteps;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (isVerified) {
+      return AppSurfaceCard(
+        child: Row(
+          children: [
+            const AppIconBadge(icon: Icons.verified_rounded),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Store verified', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Customers can now view your store details.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            const AppStatusChip(label: 'Verified'),
+          ],
+        ),
+      );
+    }
+
+    final progress = totalSteps == 0 ? 0.0 : completedSteps / totalSteps;
+
     return AppSurfaceCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isVerified ? 'Store verified' : 'Store profile incomplete',
-                  style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  'Store verification',
+                  style: theme.textTheme.titleMedium,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  isVerified
-                      ? 'Customers can now view your store details.'
-                      : 'Fill every public field to verify your store.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
+              ),
+              const SizedBox(width: 10),
+              const AppStatusChip(
+                label: 'Incomplete',
+                tone: AppStatusTone.accent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: AppColors.outline,
+              color: AppColors.primary,
             ),
           ),
-          const SizedBox(width: 14),
-          SizedBox(
-            width: 92,
-            height: 74,
-            child: SvgPicture.asset(
-              _ShopProfileAssets.productExplainer,
-              fit: BoxFit.contain,
+          const SizedBox(height: 10),
+          Text(
+            '$completedSteps of $totalSteps steps complete',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColors.primaryDark,
             ),
           ),
-          const SizedBox(width: 10),
-          AppStatusChip(
-            label: isVerified ? 'Verified' : 'Incomplete',
-            tone: isVerified ? AppStatusTone.primary : AppStatusTone.accent,
+          const SizedBox(height: 4),
+          Text(
+            'Finish every step to start responding to customer requests. '
+            'Your store verifies automatically.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.textMuted,
+            ),
           ),
         ],
       ),
@@ -614,6 +707,7 @@ class _SettingsRow extends StatelessWidget {
     this.iconColor,
     this.iconBackgroundColor,
     this.labelColor,
+    this.isComplete,
   });
 
   final IconData icon;
@@ -624,10 +718,26 @@ class _SettingsRow extends StatelessWidget {
   final Color? iconBackgroundColor;
   final Color? labelColor;
 
+  /// Verification status for required fields: `true` done, `false` still
+  /// required, `null` for rows that don't affect verification.
+  final bool? isComplete;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isRequiredMissing = isComplete == false;
     final isPlaceholder = value == 'Not set' || value == 'None selected';
+
+    final valueText = isRequiredMissing ? 'Required' : value;
+    final Color valueColor;
+    if (isRequiredMissing) {
+      valueColor = AppColors.accent;
+    } else if (isPlaceholder) {
+      valueColor = AppColors.textMuted;
+    } else {
+      valueColor = AppColors.text;
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(28),
@@ -662,17 +772,36 @@ class _SettingsRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    value,
+                    valueText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color:
-                          isPlaceholder ? AppColors.textMuted : AppColors.text,
+                      color: valueColor,
+                      fontWeight:
+                          isRequiredMissing ? FontWeight.w700 : FontWeight.w400,
                     ),
                   ),
                 ],
               ),
             ),
+            if (isComplete == true)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+              )
+            else if (isRequiredMissing)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.error_outline_rounded,
+                  size: 20,
+                  color: AppColors.accent,
+                ),
+              ),
             const Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textMuted,
@@ -761,12 +890,14 @@ class _TextFieldSheet extends StatefulWidget {
     required this.initialValue,
     this.hint,
     this.keyboardType,
+    this.required = false,
   });
 
   final String title;
   final String initialValue;
   final String? hint;
   final TextInputType? keyboardType;
+  final bool required;
 
   @override
   State<_TextFieldSheet> createState() => _TextFieldSheetState();
@@ -778,25 +909,40 @@ class _TextFieldSheetState extends State<_TextFieldSheet> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
+    _controller = TextEditingController(text: widget.initialValue)
+      ..addListener(_refresh);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller
+      ..removeListener(_refresh)
+      ..dispose();
     super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEmpty = _controller.text.trim().isEmpty;
+    final canSave = !widget.required || !isEmpty;
     return _EditSheet(
       title: widget.title,
-      onSave: () => Navigator.of(context).pop(_controller.text.trim()),
+      onSave: canSave
+          ? () => Navigator.of(context).pop(_controller.text.trim())
+          : null,
       child: TextField(
         controller: _controller,
         keyboardType: widget.keyboardType,
         autofocus: true,
-        decoration: InputDecoration(hintText: widget.hint),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          errorText:
+              widget.required && isEmpty ? 'This field is required.' : null,
+        ),
       ),
     );
   }
@@ -807,11 +953,13 @@ class _LongTextSheet extends StatefulWidget {
     required this.title,
     required this.initialValue,
     this.hint,
+    this.required = false,
   });
 
   final String title;
   final String initialValue;
   final String? hint;
+  final bool required;
 
   @override
   State<_LongTextSheet> createState() => _LongTextSheetState();
@@ -823,22 +971,33 @@ class _LongTextSheetState extends State<_LongTextSheet> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
+    _controller = TextEditingController(text: widget.initialValue)
+      ..addListener(_refresh);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller
+      ..removeListener(_refresh)
+      ..dispose();
     super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final isEmpty = _controller.text.trim().isEmpty;
+    final canSave = !widget.required || !isEmpty;
     return _EditSheet(
       title: widget.title,
       height: screenHeight * 0.7,
-      onSave: () => Navigator.of(context).pop(_controller.text.trim()),
+      onSave: canSave
+          ? () => Navigator.of(context).pop(_controller.text.trim())
+          : null,
       child: TextField(
         controller: _controller,
         autofocus: true,
@@ -848,6 +1007,8 @@ class _LongTextSheetState extends State<_LongTextSheet> {
         decoration: InputDecoration(
           hintText: widget.hint,
           alignLabelWithHint: true,
+          errorText:
+              widget.required && isEmpty ? 'This field is required.' : null,
         ),
       ),
     );
@@ -913,11 +1074,13 @@ class _ChipMultiSelectSheet extends StatefulWidget {
     required this.title,
     required this.options,
     required this.initialSelected,
+    this.required = false,
   });
 
   final String title;
   final List<String> options;
   final Set<String> initialSelected;
+  final bool required;
 
   @override
   State<_ChipMultiSelectSheet> createState() => _ChipMultiSelectSheetState();
@@ -935,32 +1098,50 @@ class _ChipMultiSelectSheetState extends State<_ChipMultiSelectSheet> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final canSave = !widget.required || _selected.isNotEmpty;
     return _EditSheet(
       title: widget.title,
       height: screenHeight * 0.55,
-      onSave: () => Navigator.of(context).pop(_selected),
-      child: SingleChildScrollView(
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final option in widget.options)
-              FilterChip(
-                label: Text(option),
-                selected: _selected.contains(option),
-                selectedColor: AppColors.primarySoft,
-                onSelected: (value) {
-                  setState(() {
-                    if (value) {
-                      _selected.add(option);
-                    } else {
-                      _selected.remove(option);
-                    }
-                  });
-                },
-              ),
+      onSave: canSave ? () => Navigator.of(context).pop(_selected) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.required && _selected.isEmpty) ...[
+            Text(
+              'Select at least one.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 12),
           ],
-        ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in widget.options)
+                    FilterChip(
+                      label: Text(option),
+                      selected: _selected.contains(option),
+                      selectedColor: AppColors.primarySoft,
+                      onSelected: (value) {
+                        setState(() {
+                          if (value) {
+                            _selected.add(option);
+                          } else {
+                            _selected.remove(option);
+                          }
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -64,21 +64,19 @@ Grabbit tackles common challenges in local shopping:
 - **Team Name**: Visioneers
 - **Institution**: Everest Engineering College
 - **Members**:
-  - Saurav Pant
   - Pujan Dhakal
 
 ## Repository Layout
 
-- `lib/` — Flutter app (entrypoint `lib/main.dart`).
-  - `pages/` — screens, split into `user/` and `Shop/` flows.
-  - `util/` — reusable widgets and cards composed by pages.
-  - `services/` — API clients (e.g. `auth_service.dart`).
-  - `models/`, `constants/` — data models and shared helpers.
+- `lib/` — Flutter app (entrypoint `lib/main.dart`), organized feature-first.
+  - `app/` — bootstrap, theme, and routing (`app/router/app_router.dart`).
+  - `core/` — shared config, networking (`core/network/api_client.dart`), errors, and reusable widgets.
+  - `features/` — vertical feature modules (`auth`, `home`, `requests`, `chat`, `profile`, `marketplace`, `shop_dashboard`, `customer_shell`, `shop_shell`, …), each split into `data/`, `domain/`, and `presentation/`.
 - `server/` — Node.js + Express backend.
   - `index.js` — entrypoint, listens on port 3000.
   - `routes/` — Express route handlers.
   - `models/` — Mongoose schemas.
-- `assets/images/` — bundled icons and SVGs (declared in `pubspec.yaml`).
+- `assets/` — bundled icons, logos, and SVGs (declared in `pubspec.yaml`).
 
 ## Installation and Setup
 

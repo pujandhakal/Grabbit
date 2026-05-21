@@ -1,3 +1,5 @@
+import 'package:grabbit/core/config/request_categories.dart';
+
 class ShopProfile {
   const ShopProfile({
     required this.businessName,
@@ -16,6 +18,7 @@ class ShopProfile {
     required this.reviewCount,
     this.latitude,
     this.longitude,
+    this.showAllRequests = true,
   });
 
   final String businessName;
@@ -34,13 +37,15 @@ class ShopProfile {
   final int reviewCount;
   final double? latitude;
   final double? longitude;
+  final bool showAllRequests;
 
   factory ShopProfile.fromMap(Map<String, dynamic> map) {
     return ShopProfile(
       businessName: map['businessName'] as String? ?? 'My Shop',
       initials: map['initials'] as String? ?? 'MS',
-      categories:
-          (map['categories'] as List? ?? const []).whereType<String>().toList(),
+      categories: RequestCategories.normalizeList(
+        (map['categories'] as List? ?? const []).whereType<String>(),
+      ),
       addressText: map['addressText'] as String? ?? 'Kathmandu',
       phone: map['phone'] as String? ?? '',
       description: map['description'] as String? ?? '',
@@ -56,6 +61,7 @@ class ShopProfile {
       reviewCount: (map['reviewCount'] as num?)?.toInt() ?? 0,
       latitude: (map['latitude'] as num?)?.toDouble(),
       longitude: (map['longitude'] as num?)?.toDouble(),
+      showAllRequests: map['showAllRequests'] as bool? ?? true,
     );
   }
 }

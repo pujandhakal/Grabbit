@@ -1,3 +1,4 @@
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/features/requests/domain/entities/shop_request.dart';
 import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
 
@@ -29,7 +30,9 @@ class ShopRequestModel extends ShopRequest {
       title: map['title'] as String? ?? '',
       subtitle: map['subtitle'] as String? ?? '',
       description: map['description'] as String? ?? '',
-      category: map['category'] as String? ?? 'Other',
+      category: RequestCategories.normalize(
+        map['category'] as String? ?? RequestCategories.other,
+      ),
       budget: map['budget'] as String? ?? 'Budget open',
       age: map['age'] as String? ?? '',
       distance: map['distance'] as String? ?? 'Nearby',

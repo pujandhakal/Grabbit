@@ -27,11 +27,23 @@ abstract final class RoutePaths {
   static const shopRequests = '/shop/requests';
   static const shopChats = '/shop/chats';
   static const shopProfile = '/shop/profile';
+  static const shopSettings = '/shop/settings';
   static const shopRequestDetail = '/shop/requests/:requestId';
   static const shopChatDetail = '/shop/chats/detail';
 
   static String requestResponsesPath(String requestId) {
     return '/customer/requests/$requestId/responses';
+  }
+
+  static String postRequestPath({String? category}) {
+    if (category == null || category.isEmpty) {
+      return postRequest;
+    }
+
+    return Uri(
+      path: postRequest,
+      queryParameters: {'category': category},
+    ).toString();
   }
 
   static String storeDetailsPath(String shopId) {

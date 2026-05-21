@@ -1,3 +1,4 @@
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/features/marketplace/domain/entities/shop_details.dart';
 import 'package:grabbit/features/marketplace/domain/repositories/shops_repository.dart';
@@ -39,7 +40,7 @@ const _shops = {
     description:
         'Premium fashion store offering latest trends in clothing, accessories, and footwear. We pride ourselves on quality products and excellent customer service. Visit us for the best deals in Kathmandu!',
     specialties: [
-      'Clothing',
+      RequestCategories.fashionClothing,
       'Fashion',
       'Accessories',
       'Footwear',

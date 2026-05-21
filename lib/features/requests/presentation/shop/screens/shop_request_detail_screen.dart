@@ -8,6 +8,7 @@ import 'package:grabbit/core/widgets/app_primary_button.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
+import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
 import 'package:grabbit/features/requests/data/repositories/api_requests_repository.dart';
 import 'package:grabbit/features/requests/domain/entities/create_shop_response_payload.dart';
 import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
@@ -119,6 +120,10 @@ class _ShopRequestDetailScreenState
   @override
   Widget build(BuildContext context) {
     final request = ref.watch(shopRequestDetailProvider(widget.requestId));
+    // Treat an unloaded profile as unverified so responding stays locked until
+    // verification is confirmed. The backend enforces this regardless.
+    final isVerified =
+        ref.watch(shopProfileProvider).valueOrNull?.isVerified ?? false;
 
     return Scaffold(
       body: AppStickyPage(
@@ -145,6 +150,7 @@ class _ShopRequestDetailScreenState
             _syncExistingResponse(item);
             return _RequestResponseForm(
               request: item,
+              isVerified: isVerified,
               priceController: _priceController,
               messageController: _messageController,
               isSubmitting: _isSubmitting,
@@ -162,6 +168,7 @@ class _ShopRequestDetailScreenState
 class _RequestResponseForm extends StatelessWidget {
   const _RequestResponseForm({
     required this.request,
+    required this.isVerified,
     required this.priceController,
     required this.messageController,
     required this.isSubmitting,
@@ -169,6 +176,7 @@ class _RequestResponseForm extends StatelessWidget {
   });
 
   final ShopRequest request;
+  final bool isVerified;
   final TextEditingController priceController;
   final TextEditingController messageController;
   final bool isSubmitting;
@@ -177,6 +185,9 @@ class _RequestResponseForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = request.status == RequestStatus.completed;
+    // Unverified shops can read the request but cannot respond yet.
+    final isLocked = !isCompleted && !isVerified;
+    final fieldsReadOnly = isCompleted || isLocked;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -228,7 +239,7 @@ class _RequestResponseForm extends StatelessWidget {
               const SizedBox(height: 8),
               TextField(
                 controller: priceController,
-                readOnly: isCompleted,
+                readOnly: fieldsReadOnly,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(hintText: 'e.g. Rs. 2,200'),
               ),
@@ -240,7 +251,7 @@ class _RequestResponseForm extends StatelessWidget {
               const SizedBox(height: 8),
               TextField(
                 controller: messageController,
-                readOnly: isCompleted,
+                readOnly: fieldsReadOnly,
                 minLines: 3,
                 maxLines: 5,
                 decoration: const InputDecoration(
@@ -264,7 +275,45 @@ class _RequestResponseForm extends StatelessWidget {
                         ),
                   ),
                 )
-              else
+              else if (isLocked) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.lock_outline_rounded,
+                        color: AppColors.accent,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Your store is not verified yet. Complete your store '
+                          'profile to unlock responding to customer requests '
+                          'with your offers.',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.text,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                AppPrimaryButton(
+                  label: 'Complete Store Profile',
+                  icon: Icons.storefront_outlined,
+                  onPressed: () => context.go(RoutePaths.shopProfile),
+                ),
+              ] else
                 AppPrimaryButton(
                   label:
                       request.hasResponded ? 'Save Response' : 'Send Response',

@@ -78,7 +78,12 @@ void main() {
               expect(request.url.toString(),
                   'http://localhost:3000/api/account/settings');
               expect(request.body, contains('"requestResponses":true'));
-              expect(request.body, contains('"categories":["Electronics"]'));
+              expect(
+                request.body,
+                contains(
+                  '"categories":["Electronics & Mobile Accessories"]',
+                ),
+              );
               return http.Response(_profileResponse, 200);
             }
             expect(request.url.toString(),
@@ -101,7 +106,7 @@ void main() {
             promotions: false,
           ),
           preferences: const CustomerPreferences(
-            categories: ['Electronics'],
+            categories: ['Electronics & Mobile Accessories'],
             budgetMin: 1000,
             budgetMax: 5000,
             searchRadiusKm: 5,
@@ -149,7 +154,7 @@ const _profileResponse = '''
       "promotions": false
     },
     "preferences": {
-      "categories": ["Electronics"],
+      "categories": ["Electronics & Mobile Accessories"],
       "budgetMin": 1000,
       "budgetMax": 5000,
       "searchRadiusKm": 5

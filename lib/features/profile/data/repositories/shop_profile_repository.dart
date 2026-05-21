@@ -61,4 +61,16 @@ class ShopProfileRepository {
     }
     return ShopProfile.fromMap(const {});
   }
+
+  Future<ShopProfile> updateRequestVisibility(bool showAllRequests) async {
+    final data = await _apiClient.put(
+      '/api/shop/settings',
+      body: {'showAllRequests': showAllRequests},
+    );
+    final profile = data['profile'];
+    if (profile is Map<String, dynamic>) {
+      return ShopProfile.fromMap(profile);
+    }
+    return ShopProfile.fromMap(const {});
+  }
 }

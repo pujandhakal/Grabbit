@@ -1,3 +1,4 @@
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
 
 class RequestSummaryModel extends RequestSummary {
@@ -26,7 +27,9 @@ class RequestSummaryModel extends RequestSummary {
       status: _statusFromString(map['status'] as String?),
       time: map['time'] as String? ?? '',
       responseText: map['responseText'] as String? ?? '0 shops responded',
-      category: map['category'] as String? ?? 'Other',
+      category: RequestCategories.normalize(
+        map['category'] as String? ?? RequestCategories.other,
+      ),
       postedAt: map['postedAt'] as String? ?? '',
       description: map['description'] as String? ?? '',
       quantity: map['quantity'] as String? ?? '',

@@ -7,7 +7,7 @@ void main() {
     const payload = CreateRequestPayload(
       title: 'Wireless Headphones',
       description: 'Budget friendly',
-      category: 'Electronics',
+      category: 'Electronics & Mobile Accessories',
       quantity: '1',
       urgency: 'need_soon',
       locationText: 'Current location',

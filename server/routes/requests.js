@@ -4,6 +4,11 @@ const CustomerRequest = require("../models/customer_request");
 const ShopProfile = require("../models/shop_profile");
 const ShopResponse = require("../models/shop_response");
 const { auth, requireRole } = require("../middleware/auth");
+const {
+  categoryAliases,
+  categoryMatches,
+  normalizeCategory,
+} = require("../utils/request_categories");
 
 const requestsRouter = express.Router();
 
@@ -144,7 +149,9 @@ requestsRouter.post(
         budgetMax,
       } = req.body;
 
-      if (!title || !category) {
+      const requestCategory = normalizeCategory(category);
+
+      if (!title || !requestCategory) {
         return res.status(400).json({ msg: "Title and category are required." });
       }
 
@@ -152,7 +159,7 @@ requestsRouter.post(
         customerId: req.user.userId,
         title,
         description,
-        category,
+        category: requestCategory,
         quantity,
         urgency,
         locationText,
@@ -163,7 +170,12 @@ requestsRouter.post(
       });
 
       const payload = requestSummary(request);
-      req.app.get("io").to(`category:${category}`).emit("request:created", payload);
+      const io = req.app.get("io");
+      let categoryBroadcast = io;
+      for (const categoryRoom of categoryAliases(requestCategory)) {
+        categoryBroadcast = categoryBroadcast.to(`category:${categoryRoom}`);
+      }
+      categoryBroadcast.emit("request:created", payload);
 
       return res.status(201).json({ request: payload });
     } catch (error) {
@@ -251,7 +263,13 @@ requestsRouter.post(
         return res.status(400).json({ msg: "Complete your shop profile first." });
       }
 
-      if (!profile.categories.includes(request.category)) {
+      if (!profile.isVerified) {
+        return res.status(403).json({
+          msg: "Verify your store before responding to customer requests.",
+        });
+      }
+
+      if (!categoryMatches(profile.categories, request.category)) {
         return res.status(403).json({ msg: "This request does not match your shop categories." });
       }
 
@@ -381,7 +399,11 @@ requestsRouter.delete(
       };
       const io = req.app.get("io");
       io.to(`user:${req.user.userId}`).emit("request:deleted", payload);
-      io.to(`category:${request.category}`).emit("request:deleted", payload);
+      let categoryBroadcast = io;
+      for (const categoryRoom of categoryAliases(request.category)) {
+        categoryBroadcast = categoryBroadcast.to(`category:${categoryRoom}`);
+      }
+      categoryBroadcast.emit("request:deleted", payload);
 
       return res.json({ ok: true });
     } catch (error) {
@@ -419,7 +441,13 @@ requestsRouter.put(
         return res.status(400).json({ msg: "Complete your shop profile first." });
       }
 
-      if (!profile.categories.includes(request.category)) {
+      if (!profile.isVerified) {
+        return res.status(403).json({
+          msg: "Verify your store before responding to customer requests.",
+        });
+      }
+
+      if (!categoryMatches(profile.categories, request.category)) {
         return res.status(403).json({ msg: "This request does not match your shop categories." });
       }
 

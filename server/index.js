@@ -10,6 +10,7 @@ const requestsRouter = require("./routes/requests");
 const shopRouter = require("./routes/shop");
 const chatRouter = require("./routes/chat");
 const ShopProfile = require("./models/shop_profile");
+const { categoriesWithAliases } = require("./utils/request_categories");
 
 const PORT = 3000;
 const DB =
@@ -55,7 +56,7 @@ io.on("connection", async (socket) => {
 
   if (user.role === "shop") {
     const profile = await ShopProfile.findOne({ userId: user.userId });
-    for (const category of profile?.categories || []) {
+    for (const category of categoriesWithAliases(profile?.categories || [])) {
       socket.join(`category:${category}`);
     }
   }

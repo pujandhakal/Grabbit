@@ -53,31 +53,54 @@ class _ChatThreadsViewState extends ConsumerState<ChatThreadsView> {
         title: widget.title,
         subtitle: widget.subtitle,
         bottom: AppSurfaceCard(
-          padding: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          radius: 20,
+          child: SizedBox(
+            height: 44,
             child: TextField(
               controller: _searchController,
+              textAlignVertical: TextAlignVertical.center,
+              style: Theme.of(context).textTheme.bodyMedium,
               onChanged: (value) {
                 setState(() {
                   _query = value.trim();
                 });
               },
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                prefixIconConstraints: const BoxConstraints.tightFor(
+                  width: 38,
+                  height: 38,
+                ),
                 suffixIcon: _query.isEmpty
                     ? null
                     : IconButton(
                         tooltip: 'Clear search',
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 36,
+                          height: 36,
+                        ),
+                        padding: EdgeInsets.zero,
                         onPressed: () {
                           _searchController.clear();
                           setState(() {
                             _query = '';
                           });
                         },
-                        icon: const Icon(Icons.close_rounded),
+                        icon: const Icon(Icons.close_rounded, size: 18),
                       ),
                 hintText: widget.searchHint,
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                isDense: true,
+                contentPadding: const EdgeInsets.only(
+                  left: 0,
+                  right: 10,
+                  top: 11,
+                  bottom: 11,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,

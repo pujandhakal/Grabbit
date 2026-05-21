@@ -1,4 +1,5 @@
 import 'package:grabbit/core/errors/app_exception.dart';
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/features/requests/domain/entities/create_request_payload.dart';
 import 'package:grabbit/features/requests/domain/entities/create_shop_response_payload.dart';
 import 'package:grabbit/features/requests/domain/entities/request_responses.dart';
@@ -96,7 +97,7 @@ class MockRequestsRepository implements RequestsRepository {
         subtitle: 'Customer needs cotton fleece, nearby pickup preferred.',
         description:
             'Need a red hoodie, size L, preferably cotton material. Looking for good quality.',
-        category: 'Clothing',
+        category: RequestCategories.fashionClothing,
         budget: 'Rs. 2,500',
         age: '12 min ago',
         distance: 'Kathmandu, New Baneshwor',
@@ -114,7 +115,7 @@ class MockRequestsRepository implements RequestsRepository {
         subtitle: 'Customer wants drop protection and quick availability.',
         description:
             'Looking for a durable phone case for iPhone 14 Pro, preferably with drop protection.',
-        category: 'Electronics',
+        category: RequestCategories.electronicsMobileAccessories,
         budget: 'Rs. 1,500',
         age: '25 min ago',
         distance: 'Kathmandu, Putalisadak',
@@ -132,7 +133,7 @@ class MockRequestsRepository implements RequestsRepository {
         title: 'Second-hand textbooks',
         subtitle: 'Customer completed this purchase after your response.',
         description: 'Looking for used Grade 10 textbooks in good condition.',
-        category: 'Books',
+        category: RequestCategories.booksStationery,
         budget: 'Rs. 1,200',
         age: '1 day ago',
         distance: 'Kathmandu, Baneshwor',
@@ -189,7 +190,7 @@ const _requests = [
     status: RequestStatus.active,
     time: 'Posted 2 hours ago',
     responseText: '8 shops responded',
-    category: 'Clothing',
+    category: RequestCategories.fashionClothing,
     postedAt: 'Posted 2 hours ago',
   ),
   RequestSummary(
@@ -199,7 +200,7 @@ const _requests = [
     status: RequestStatus.pending,
     time: 'Updated 35 mins ago',
     responseText: '2 shops responded',
-    category: 'Sports',
+    category: RequestCategories.sportsFitness,
     postedAt: 'Posted 35 mins ago',
   ),
   RequestSummary(
@@ -209,7 +210,7 @@ const _requests = [
     status: RequestStatus.completed,
     time: 'Closed yesterday',
     responseText: 'Completed',
-    category: 'Books',
+    category: RequestCategories.booksStationery,
     postedAt: 'Posted yesterday',
   ),
 ];

@@ -2,10 +2,10 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/widgets/app_discovery_radar.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_soft_background.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
@@ -14,10 +14,6 @@ import 'package:grabbit/features/chat/data/repositories/chat_repository.dart';
 import 'package:grabbit/features/profile/data/repositories/shop_profile_repository.dart';
 import 'package:grabbit/features/profile/domain/entities/shop_profile.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
-
-abstract final class _ShopAssets {
-  static const businessAnalytics = 'assets/images/shop_business_analytics.svg';
-}
 
 class ShopDashboardScreen extends ConsumerWidget {
   const ShopDashboardScreen({super.key});
@@ -328,159 +324,36 @@ class _StoreStatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              SizedBox(
-                width: 112,
-                height: 76,
-                child: SvgPicture.asset(
-                  _ShopAssets.businessAnalytics,
-                  fit: BoxFit.contain,
+          const SizedBox(
+            height: 92,
+            width: double.infinity,
+            child: AppDiscoveryRadar(
+              nodeSide: RadarNodeSide.right,
+              nodeIcon: Icons.storefront_rounded,
+              pins: [
+                RadarPin(
+                  fx: 0.12,
+                  fy: 0.30,
+                  color: AppColors.blue,
+                  glyph: Icons.shopping_bag_outlined,
                 ),
-              ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: SizedBox(
-                  height: 64,
-                  child: _ShopResponseFlowAnimation(),
+                RadarPin(
+                  fx: 0.30,
+                  fy: 0.74,
+                  color: AppColors.accent,
+                  glyph: Icons.search_rounded,
                 ),
-              ),
-            ],
+                RadarPin(
+                  fx: 0.48,
+                  fy: 0.40,
+                  color: AppColors.primaryDark,
+                  glyph: Icons.local_mall_outlined,
+                ),
+              ],
+            ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ShopResponseFlowAnimation extends StatefulWidget {
-  const _ShopResponseFlowAnimation();
-
-  @override
-  State<_ShopResponseFlowAnimation> createState() =>
-      _ShopResponseFlowAnimationState();
-}
-
-class _ShopResponseFlowAnimationState extends State<_ShopResponseFlowAnimation>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-      value: 0.12,
-    );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final mediaQuery = MediaQuery.maybeOf(context);
-    final shouldReduceMotion = (mediaQuery?.disableAnimations ?? false) ||
-        (mediaQuery?.accessibleNavigation ?? false);
-
-    if (shouldReduceMotion) {
-      _controller.stop();
-      _controller.value = 0.58;
-      return;
-    }
-
-    if (!_controller.isAnimating) {
-      _controller.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft.withValues(alpha: 0.52),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.12),
-        ),
-      ),
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final progress = Curves.easeInOut.transform(_controller.value);
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 14,
-                child: _FlowNode(
-                  icon: Icons.person_outline_rounded,
-                  color: AppColors.blue,
-                  active: _controller.value < 0.55,
-                ),
-              ),
-              Positioned(
-                right: 14,
-                child: _FlowNode(
-                  icon: Icons.storefront_outlined,
-                  color: AppColors.primaryDark,
-                  active: _controller.value >= 0.45,
-                ),
-              ),
-              Positioned(
-                left: 52 + (progress * 58),
-                child: Container(
-                  width: 11,
-                  height: 11,
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.accent.withValues(alpha: 0.26),
-                        blurRadius: 16,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _FlowNode extends StatelessWidget {
-  const _FlowNode({
-    required this.icon,
-    required this.color,
-    required this.active,
-  });
-
-  final IconData icon;
-  final Color color;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      width: active ? 44 : 38,
-      height: active ? 44 : 38,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: active ? 0.16 : 0.10),
-        borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: color.withValues(alpha: active ? 0.30 : 0.14)),
-      ),
-      child: Icon(icon, color: color, size: 21),
     );
   }
 }

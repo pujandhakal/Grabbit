@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:grabbit/app/router/route_paths.dart';
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/core/widgets/app_primary_button.dart';
@@ -12,18 +14,13 @@ import 'package:grabbit/features/requests/data/repositories/api_requests_reposit
 import 'package:grabbit/features/requests/domain/entities/create_request_payload.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 
-const _categories = [
-  'Groceries',
-  'Electronics',
-  'Clothing',
-  'Food & Beverages',
-  'Health',
-  'Sports',
-  'Other',
-];
-
 class PostRequestScreen extends ConsumerStatefulWidget {
-  const PostRequestScreen({super.key});
+  const PostRequestScreen({
+    super.key,
+    this.initialCategory,
+  });
+
+  final String? initialCategory;
 
   @override
   ConsumerState<PostRequestScreen> createState() => _PostRequestScreenState();
@@ -47,7 +44,16 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
   @override
   void initState() {
     super.initState();
+    _category = _validInitialCategory(widget.initialCategory);
     _useCurrentLocation();
+  }
+
+  @override
+  void didUpdateWidget(covariant PostRequestScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCategory != oldWidget.initialCategory) {
+      _category = _validInitialCategory(widget.initialCategory);
+    }
   }
 
   @override
@@ -87,7 +93,7 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request posted to nearby shops.')),
       );
-      context.pop();
+      context.go(RoutePaths.requests);
     } catch (error) {
       if (!mounted) return;
       final message = error is AppException
@@ -109,6 +115,12 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
     return int.tryParse(trimmed);
+  }
+
+  String? _validInitialCategory(String? category) {
+    if (category == null) return null;
+    final normalized = RequestCategories.normalize(category);
+    return RequestCategories.all.contains(normalized) ? normalized : null;
   }
 
   Future<void> _useCurrentLocation() async {
@@ -244,12 +256,30 @@ class _PostRequestScreenState extends ConsumerState<PostRequestScreen> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _category,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         hintText: 'Select a category',
                       ),
-                      items: _categories
+                      selectedItemBuilder: (context) => RequestCategories.all
                           .map(
-                              (c) => DropdownMenuItem(value: c, child: Text(c)))
+                            (c) => Text(
+                              c,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                          .toList(),
+                      items: RequestCategories.all
+                          .map(
+                            (c) => DropdownMenuItem(
+                              value: c,
+                              child: Text(
+                                c,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => _category = v),
                       validator: (v) => (v == null || v.isEmpty)

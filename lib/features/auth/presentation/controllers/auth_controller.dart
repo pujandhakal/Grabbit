@@ -13,12 +13,16 @@ final authControllerProvider =
 );
 
 class AuthController extends AsyncNotifier<UserEntity?> {
-  late final AuthRepository _repository;
   late final AuthSessionStore _sessionStore;
+
+  // Read lazily at call time rather than cached: authRepositoryProvider depends
+  // on apiClientProvider -> apiTokenProvider, so it must be re-resolved after a
+  // login sets the token. Caching it in build() would freeze a token-less
+  // ApiClient and break authenticated calls like deleteAccount.
+  AuthRepository get _repository => ref.read(authRepositoryProvider);
 
   @override
   Future<UserEntity?> build() async {
-    _repository = ref.read(authRepositoryProvider);
     _sessionStore = ref.read(authSessionStoreProvider);
     final restoredUser = await _sessionStore.restore();
     ref.read(apiTokenProvider.notifier).state = restoredUser?.token;

@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grabbit/app/app.dart';
 import 'package:grabbit/app/router/app_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
+import 'package:grabbit/core/network/api_client.dart';
 import 'package:grabbit/core/network/connectivity_status.dart';
+import 'package:grabbit/core/widgets/app_primary_button.dart';
 import 'package:grabbit/features/auth/domain/entities/user_entity.dart';
 import 'package:grabbit/features/auth/domain/entities/user_role.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
@@ -19,11 +21,17 @@ import 'package:grabbit/features/profile/data/repositories/customer_profile_repo
 import 'package:grabbit/features/profile/domain/entities/customer_profile.dart';
 import 'package:grabbit/features/profile/domain/entities/shop_profile.dart';
 import 'package:grabbit/features/profile/presentation/shop/screens/shop_profile_screen.dart';
+import 'package:grabbit/features/profile/presentation/shop/screens/shop_settings_screen.dart';
+import 'package:grabbit/features/profile/presentation/widgets/logout_confirmation_dialog.dart';
 import 'package:grabbit/features/requests/data/repositories/api_requests_repository.dart';
 import 'package:grabbit/features/requests/data/repositories/mock_requests_repository.dart';
+import 'package:grabbit/features/requests/domain/entities/create_request_payload.dart';
+import 'package:grabbit/features/requests/domain/entities/request_responses.dart';
 import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
+import 'package:grabbit/features/requests/domain/entities/shop_response.dart';
 import 'package:grabbit/features/requests/domain/entities/shop_request.dart';
 import 'package:grabbit/features/requests/domain/repositories/requests_repository.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   testWidgets('app boots into login', (tester) async {
@@ -65,8 +73,8 @@ void main() {
     expect(find.text('Your Activity'), findsOneWidget);
     expect(find.text('Grabbit'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('GroupBuy'),
-      500,
+      find.text('GroupBuy is coming soon'),
+      800,
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('GroupBuy'), findsOneWidget);
@@ -109,6 +117,71 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Delete Account'), findsOneWidget);
+  });
+
+  testWidgets('home category shortcut preselects request category',
+      (tester) async {
+    final container = _containerWithAuth(role: UserRole.customer);
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.home);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(
+      find.widgetWithText(ActionChip, 'Electronics & Mobile Accessories'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Post What You Need'), findsOneWidget);
+    expect(find.text('Electronics & Mobile Accessories'), findsOneWidget);
+    expect(find.text('Select a category'), findsNothing);
+  });
+
+  testWidgets('posting a request routes to my requests', (tester) async {
+    final repository = _RecordingRequestsRepository();
+    final container = _containerWithAuth(
+      role: UserRole.customer,
+      requestsRepository: repository,
+    );
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(
+      RoutePaths.postRequestPath(
+        category: 'Electronics & Mobile Accessories',
+      ),
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'e.g., Wireless Headphones'),
+      'USB-C charger',
+    );
+    await tester.scrollUntilVisible(
+      find.widgetWithText(AppPrimaryButton, 'Post Request'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Post Request'));
+    await tester.pumpAndSettle();
+
+    expect(repository.createdPayloads.single.title, 'USB-C charger');
+    expect(find.text('My Requests'), findsOneWidget);
+    expect(find.text('Pending (2)'), findsOneWidget);
   });
 
   testWidgets('chat detail opens without bottom navigation', (tester) async {
@@ -210,6 +283,53 @@ void main() {
     expect(find.text('Street Style Nepal'), findsOneWidget);
     expect(find.byKey(const ValueKey('nav-requests')), findsNothing);
     expect(find.byKey(const ValueKey('nav-profile')), findsNothing);
+  });
+
+  testWidgets('response chips sort nearest first and restore all shops',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 3600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = _containerWithAuth(
+      role: UserRole.customer,
+      requestsRepository: const _UnsortedResponsesRepository(),
+    );
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.requestResponsesPath(defaultRequestId));
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Far Bazaar'), findsOneWidget);
+    expect(find.text('Near Mart'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Far Bazaar')).dy,
+      lessThan(tester.getTopLeft(find.text('Near Mart')).dy),
+    );
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Nearest First'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getTopLeft(find.text('Near Mart')).dy,
+      lessThan(tester.getTopLeft(find.text('Far Bazaar')).dy),
+    );
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'All Shops'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getTopLeft(find.text('Far Bazaar')).dy,
+      lessThan(tester.getTopLeft(find.text('Near Mart')).dy),
+    );
   });
 
   testWidgets('customer can delete a request from request list',
@@ -420,6 +540,119 @@ void main() {
     expect(find.byType(SvgPicture), findsOneWidget);
   });
 
+  testWidgets('unverified shop can still view incoming requests',
+      (tester) async {
+    final container = _containerWithAuth(
+      role: UserRole.shop,
+      shopProfile: _unverifiedShopProfile,
+    );
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.shopRequests);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Incoming Requests'), findsOneWidget);
+    expect(find.text('Red Hoodie, Size L'), findsOneWidget);
+    expect(find.text('iPhone 14 Pro Case'), findsNothing);
+    await tester.tap(find.textContaining('Already Responded'));
+    await tester.pumpAndSettle();
+    expect(find.text('iPhone 14 Pro Case'), findsOneWidget);
+  });
+
+  testWidgets('unverified shop request detail locks responding',
+      (tester) async {
+    final container = _containerWithAuth(
+      role: UserRole.shop,
+      shopProfile: _unverifiedShopProfile,
+    );
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.shopRequestDetailPath(defaultRequestId));
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Request content stays visible.
+    expect(find.text('Red Hoodie, Size L'), findsOneWidget);
+    // Verification lock notice and CTA are shown instead of the send action.
+    expect(
+      find.textContaining('Your store is not verified yet'),
+      findsOneWidget,
+    );
+    expect(find.text('Complete Store Profile'), findsOneWidget);
+    expect(find.text('Send Response'), findsNothing);
+  });
+
+  testWidgets('shop profile settings button opens settings screen',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 6000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = _containerWithAuth(role: UserRole.shop);
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    router.go(RoutePaths.shopProfile);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GrabbitApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Store Profile'), findsOneWidget);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Show all requests'), findsOneWidget);
+  });
+
+  testWidgets('shop settings toggles request visibility', (tester) async {
+    final repository = _RecordingShopProfileRepository();
+    final container = ProviderContainer(
+      overrides: [
+        authControllerProvider.overrideWith(
+          () => _FakeAuthController(UserRole.shop),
+        ),
+        shopProfileProvider.overrideWith((ref) async => _verifiedShopProfile),
+        shopProfileRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ShopSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Show all requests'), findsOneWidget);
+
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+
+    expect(repository.lastShowAllRequests, isFalse);
+  });
+
   testWidgets('shop profile shows danger zone', (tester) async {
     tester.view.physicalSize = const Size(1080, 6000);
     tester.view.devicePixelRatio = 1;
@@ -446,6 +679,37 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('DANGER ZONE'), findsOneWidget);
     expect(find.text('Delete Account'), findsOneWidget);
+  });
+
+  testWidgets('unverified shop profile shows verification progress',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 6000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = _containerWithAuth(
+      role: UserRole.shop,
+      shopProfile: _unverifiedShopProfile,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: ShopProfileScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verify Your Store'), findsOneWidget);
+    expect(find.textContaining('of 11 steps complete'), findsOneWidget);
+    // Empty required fields surface a Required marker.
+    expect(find.text('Required'), findsWidgets);
   });
 
   testWidgets('customer profile rows open detail screens', (tester) async {
@@ -485,11 +749,59 @@ void main() {
       await tester.pumpAndSettle();
     }
   });
+
+  testWidgets('logout confirmation dialog cancels and confirms',
+      (tester) async {
+    var confirmed = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: Center(
+                child: OutlinedButton(
+                  onPressed: () async {
+                    confirmed = await showLogoutConfirmationDialog(context);
+                  },
+                  child: const Text('Show dialog'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Show dialog'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Log out?'), findsOneWidget);
+    expect(
+      find.text('Are you sure you want to log out of Grabbit?'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(confirmed, isFalse);
+    expect(find.text('Log out?'), findsNothing);
+
+    await tester.tap(find.text('Show dialog'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log Out').last);
+    await tester.pumpAndSettle();
+
+    expect(confirmed, isTrue);
+    expect(find.text('Log out?'), findsNothing);
+  });
 }
 
 ProviderContainer _containerWithAuth({
   required UserRole? role,
   RequestsRepository requestsRepository = const MockRequestsRepository(),
+  ShopProfile shopProfile = _verifiedShopProfile,
 }) {
   return ProviderContainer(
     overrides: [
@@ -502,24 +814,7 @@ ProviderContainer _containerWithAuth({
       chatThreadsProvider.overrideWith((ref) async => _mockChatThreads),
       customerProfileProvider.overrideWith((ref) async => _mockCustomerProfile),
       customerReviewsProvider.overrideWith((ref) async => const []),
-      shopProfileProvider.overrideWith(
-        (ref) async => const ShopProfile(
-          businessName: 'Kathmandu Electronics',
-          initials: 'KE',
-          categories: ['Electronics'],
-          addressText: 'New Baneshwor, Kathmandu',
-          phone: '9800000000',
-          description: 'Electronics, accessories, and repairs.',
-          specialties: ['Electronics', 'Accessories'],
-          openStatus: 'Open Now',
-          closingTime: 'Closes 9:00 PM',
-          typicalResponseTime: '15 minutes',
-          landmark: 'Near Civil Hospital',
-          isVerified: true,
-          rating: 4.8,
-          reviewCount: 127,
-        ),
-      ),
+      shopProfileProvider.overrideWith((ref) async => shopProfile),
     ],
   );
 }
@@ -541,6 +836,16 @@ class _DeletingRequestsRepository extends MockRequestsRepository {
   }
 }
 
+class _RecordingRequestsRepository extends MockRequestsRepository {
+  final createdPayloads = <CreateRequestPayload>[];
+
+  @override
+  Future<RequestSummary> createRequest(CreateRequestPayload payload) async {
+    createdPayloads.add(payload);
+    return super.createRequest(payload);
+  }
+}
+
 class _CompletedOnlyRequestsRepository extends MockRequestsRepository {
   const _CompletedOnlyRequestsRepository();
 
@@ -553,12 +858,69 @@ class _CompletedOnlyRequestsRepository extends MockRequestsRepository {
   }
 }
 
+class _UnsortedResponsesRepository extends MockRequestsRepository {
+  const _UnsortedResponsesRepository();
+
+  @override
+  Future<RequestResponses> fetchRequestResponses(String requestId) async {
+    return const RequestResponses(
+      request: RequestSummary(
+        id: defaultRequestId,
+        title: 'Red Hoodie, Size L',
+        subtitle: 'Active request with multiple nearby fashion shop responses.',
+        status: RequestStatus.active,
+        time: 'Posted 2 hours ago',
+        responseText: '2 shops responded',
+        category: 'Fashion & Clothing',
+        postedAt: 'Posted 2 hours ago',
+      ),
+      responses: [
+        ShopResponse(
+          shopId: 'far-bazaar',
+          shopUserId: 'far-shop-user',
+          name: 'Far Bazaar',
+          distance: '3km away',
+          respondedAgo: '3 mins ago',
+          rating: '4.8',
+          reviews: '(20 reviews)',
+          message: 'We have this in stock.',
+          price: 'Rs. 2,900',
+        ),
+        ShopResponse(
+          shopId: 'near-mart',
+          shopUserId: 'near-shop-user',
+          name: 'Near Mart',
+          distance: '450m away',
+          respondedAgo: '5 mins ago',
+          rating: '4.5',
+          reviews: '(12 reviews)',
+          message: 'Available for pickup today.',
+          price: 'Rs. 2,500',
+        ),
+      ],
+    );
+  }
+}
+
 class _EmptyShopRequestsRepository extends MockRequestsRepository {
   const _EmptyShopRequestsRepository();
 
   @override
   Future<List<ShopRequest>> fetchShopRequests() async {
     return const [];
+  }
+}
+
+class _RecordingShopProfileRepository extends ShopProfileRepository {
+  _RecordingShopProfileRepository()
+      : super(ApiClient(baseUrl: '', client: http.Client()));
+
+  bool? lastShowAllRequests;
+
+  @override
+  Future<ShopProfile> updateRequestVisibility(bool showAllRequests) async {
+    lastShowAllRequests = showAllRequests;
+    return ShopProfile.fromMap({'showAllRequests': showAllRequests});
   }
 }
 
@@ -588,6 +950,40 @@ final _mockChatThreads = [
     isUnread: false,
   ),
 ];
+
+const _verifiedShopProfile = ShopProfile(
+  businessName: 'Kathmandu Electronics',
+  initials: 'KE',
+  categories: ['Electronics & Mobile Accessories'],
+  addressText: 'New Baneshwor, Kathmandu',
+  phone: '9800000000',
+  description: 'Electronics, accessories, and repairs.',
+  specialties: ['Mobile Accessories', 'Repairs'],
+  openStatus: 'Open Now',
+  closingTime: 'Closes 9:00 PM',
+  typicalResponseTime: '15 minutes',
+  landmark: 'Near Civil Hospital',
+  isVerified: true,
+  rating: 4.8,
+  reviewCount: 127,
+);
+
+const _unverifiedShopProfile = ShopProfile(
+  businessName: 'Kathmandu Electronics',
+  initials: 'KE',
+  categories: [],
+  addressText: '',
+  phone: '',
+  description: '',
+  specialties: [],
+  openStatus: '',
+  closingTime: '',
+  typicalResponseTime: '',
+  landmark: '',
+  isVerified: false,
+  rating: 0,
+  reviewCount: 0,
+);
 
 const _mockCustomerProfile = CustomerProfile(
   user: UserEntity(
@@ -622,7 +1018,7 @@ const _mockCustomerProfile = CustomerProfile(
     promotions: false,
   ),
   preferences: CustomerPreferences(
-    categories: ['Electronics'],
+    categories: ['Electronics & Mobile Accessories'],
     budgetMin: 1000,
     budgetMax: 5000,
     searchRadiusKm: 5,
@@ -649,5 +1045,10 @@ class _FakeAuthController extends AuthController {
       role: role!,
       token: '',
     );
+  }
+
+  @override
+  Future<void> logout() async {
+    state = const AsyncData(null);
   }
 }

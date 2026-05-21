@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/config/request_categories.dart';
 import 'package:grabbit/core/errors/app_exception.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
@@ -10,16 +11,6 @@ import 'package:grabbit/core/widgets/app_surface_card.dart';
 import 'package:grabbit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:grabbit/features/profile/data/repositories/customer_profile_repository.dart';
 import 'package:grabbit/features/profile/domain/entities/customer_profile.dart';
-
-const _preferenceCategories = [
-  'Groceries',
-  'Electronics',
-  'Clothing',
-  'Food & Beverages',
-  'Health',
-  'Sports',
-  'Other',
-];
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -641,7 +632,7 @@ class _RequestDefaultsScreenState extends ConsumerState<RequestDefaultsScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    for (final category in _preferenceCategories)
+                    for (final category in RequestCategories.all)
                       FilterChip(
                         label: Text(category),
                         selected: _categories.contains(category),

@@ -26,22 +26,11 @@ class BrandBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(size / 2.9),
-          gradient: const LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.primaryDark,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: const Icon(
-          Icons.storefront_rounded,
-          color: Colors.white,
-          size: 34,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size / 2.9),
+        child: Image.asset(
+          'assets/logos/grabbit_logo.png',
+          fit: BoxFit.contain,
         ),
       ),
     );

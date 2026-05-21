@@ -4,15 +4,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grabbit/app/router/route_paths.dart';
 import 'package:grabbit/app/theme/app_theme.dart';
+import 'package:grabbit/core/config/request_categories.dart';
+import 'package:grabbit/core/widgets/app_discovery_radar.dart';
 import 'package:grabbit/core/widgets/app_section_header.dart';
 import 'package:grabbit/core/widgets/app_sticky_page.dart';
 import 'package:grabbit/core/widgets/app_status_chip.dart';
 import 'package:grabbit/core/widgets/app_surface_card.dart';
+import 'package:grabbit/core/widgets/brand_badge.dart';
 import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 
 abstract final class _HomeAssets {
-  static const businessShop = 'assets/images/home_business_shop.svg';
   static const addToCart = 'assets/images/home_add_to_cart.svg';
   static const groupProject = 'assets/images/home_group_project.svg';
 }
@@ -32,6 +34,9 @@ class HomeScreen extends ConsumerWidget {
           children: [
             _RequestComposerCard(
               onPostRequest: () => context.push(RoutePaths.postRequest),
+              onCategoryRequest: (category) => context.push(
+                RoutePaths.postRequestPath(category: category),
+              ),
             ),
             const SizedBox(height: 20),
             _RequestStatusSummary(
@@ -65,36 +70,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: const LinearGradient(
-              colors: [
-                AppColors.primary,
-                AppColors.primaryDark,
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.20),
-                blurRadius: 24,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text(
-              'G',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
+        const BrandBadge(size: 56),
         const SizedBox(width: 14),
         const Expanded(
           child: Column(
@@ -110,7 +86,7 @@ class _Header extends StatelessWidget {
               ),
               SizedBox(height: 3),
               Text(
-                'Kathmandu, Nepal',
+                'Nearby shops. Better offers.',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textMuted,
@@ -127,19 +103,15 @@ class _Header extends StatelessWidget {
 class _RequestComposerCard extends StatelessWidget {
   const _RequestComposerCard({
     required this.onPostRequest,
+    required this.onCategoryRequest,
   });
 
   final VoidCallback onPostRequest;
+  final ValueChanged<String> onCategoryRequest;
 
   @override
   Widget build(BuildContext context) {
-    final suggestions = const [
-      'Phone accessories',
-      'Clothing',
-      'Books',
-      'Groceries',
-      'Electronics',
-    ];
+    final suggestions = RequestCategories.homeShortcuts;
 
     return AppSurfaceCard(
       padding: EdgeInsets.zero,
@@ -153,47 +125,39 @@ class _RequestComposerCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  height: 146,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Expanded(child: _RequestComposerCopy()),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 126,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              _HomeAssets.businessShop,
-                              width: 122,
-                              height: 78,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(height: 8),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.92),
-                                borderRadius: BorderRadius.circular(22),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.shadow
-                                        .withValues(alpha: 0.18),
-                                    blurRadius: 18,
-                                    spreadRadius: -6,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: const SizedBox(
-                                width: 120,
-                                height: 54,
-                                child: _RequestFlowAnimation(),
-                              ),
-                            ),
-                          ],
-                        ),
+                const _RequestComposerCopy(),
+                const SizedBox(height: 16),
+                const SizedBox(
+                  height: 96,
+                  width: double.infinity,
+                  child: AppDiscoveryRadar(
+                    nodeSide: RadarNodeSide.left,
+                    nodeIcon: Icons.receipt_long_rounded,
+                    nodeColor: AppColors.primary,
+                    pins: [
+                      RadarPin(
+                        fx: 0.58,
+                        fy: 0.30,
+                        color: AppColors.accent,
+                        glyph: Icons.storefront_rounded,
+                      ),
+                      RadarPin(
+                        fx: 0.74,
+                        fy: 0.72,
+                        color: AppColors.blue,
+                        glyph: Icons.storefront_rounded,
+                      ),
+                      RadarPin(
+                        fx: 0.90,
+                        fy: 0.34,
+                        color: AppColors.primaryDark,
+                        glyph: Icons.storefront_rounded,
+                      ),
+                      RadarPin(
+                        fx: 0.82,
+                        fy: 0.80,
+                        color: AppColors.accent,
+                        glyph: Icons.storefront_rounded,
                       ),
                     ],
                   ),
@@ -213,7 +177,7 @@ class _RequestComposerCard extends StatelessWidget {
                       ActionChip(
                         label: Text(suggestion),
                         avatar: const Icon(Icons.add_rounded, size: 16),
-                        onPressed: onPostRequest,
+                        onPressed: () => onCategoryRequest(suggestion),
                       ),
                   ],
                 ),
@@ -254,128 +218,6 @@ class _RequestComposerCopy extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _RequestFlowAnimation extends StatefulWidget {
-  const _RequestFlowAnimation();
-
-  @override
-  State<_RequestFlowAnimation> createState() => _RequestFlowAnimationState();
-}
-
-class _RequestFlowAnimationState extends State<_RequestFlowAnimation>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-      value: 0.08,
-    );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final mediaQuery = MediaQuery.maybeOf(context);
-    final shouldReduceMotion = (mediaQuery?.disableAnimations ?? false) ||
-        (mediaQuery?.accessibleNavigation ?? false);
-
-    if (shouldReduceMotion) {
-      _controller.stop();
-      _controller.value = 0.58;
-      return;
-    }
-
-    if (!_controller.isAnimating) {
-      _controller.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final progress = Curves.easeInOut.transform(_controller.value);
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Positioned(
-              left: 12,
-              child: _FlowNode(
-                icon: Icons.receipt_long_outlined,
-                color: AppColors.primary,
-                active: _controller.value < 0.55,
-              ),
-            ),
-            Positioned(
-              right: 12,
-              child: _FlowNode(
-                icon: Icons.storefront_outlined,
-                color: AppColors.accent,
-                active: _controller.value >= 0.45,
-              ),
-            ),
-            Positioned(
-              left: 42 + (progress * 28),
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: AppColors.blue,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.blue.withValues(alpha: 0.26),
-                      blurRadius: 16,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _FlowNode extends StatelessWidget {
-  const _FlowNode({
-    required this.icon,
-    required this.color,
-    required this.active,
-  });
-
-  final IconData icon;
-  final Color color;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      width: active ? 48 : 42,
-      height: active ? 48 : 42,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: active ? 0.18 : 0.10),
-        borderRadius: BorderRadius.circular(18),
-        border:
-            Border.all(color: color.withValues(alpha: active ? 0.32 : 0.16)),
-      ),
-      child: Icon(icon, color: color, size: 22),
     );
   }
 }

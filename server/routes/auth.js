@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const User = require("../models/user");
 const ShopProfile = require("../models/shop_profile");
 const CustomerRequest = require("../models/customer_request");
@@ -9,6 +10,7 @@ const Message = require("../models/message");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET, auth } = require("../middleware/auth");
+const { normalizeCategories } = require("../utils/request_categories");
 
 const authRouter = express.Router();
 
@@ -86,7 +88,7 @@ function settingsDto(user) {
 function preferencesDto(user) {
     const preferences = user.preferences || {};
     return {
-        categories: preferences.categories || [],
+        categories: normalizeCategories(preferences.categories || []),
         budgetMin: preferences.budgetMin ?? null,
         budgetMax: preferences.budgetMax ?? null,
         searchRadiusKm: preferences.searchRadiusKm || 5,
@@ -155,80 +157,117 @@ function reviewListDto(review) {
     };
 }
 
-async function recalculateShopRating(profileId) {
-    const reviews = await ShopReview.find({ shopProfileId: profileId });
+async function recalculateShopRating(profileId, session = null) {
+    const reviews = await ShopReview.find({ shopProfileId: profileId }).session(session);
     const reviewCount = reviews.length;
     const rating =
         reviewCount === 0
             ? 0
             : reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount;
 
-    await ShopProfile.findByIdAndUpdate(profileId, {
-        rating,
-        reviewCount,
-    });
-}
-
-async function refreshRequestResponseCounts(requestIds) {
-    const uniqueIds = [...new Set(requestIds.map((id) => id.toString()))];
-    await Promise.all(
-        uniqueIds.map(async (requestId) => {
-            const responseCount = await ShopResponse.countDocuments({ requestId });
-            await CustomerRequest.findByIdAndUpdate(requestId, { responseCount });
-        }),
+    await ShopProfile.findByIdAndUpdate(
+        profileId,
+        { rating, reviewCount },
+        { session },
     );
 }
 
-async function deleteThreads(query) {
-    const threads = await ChatThread.find(query).select("_id");
+async function refreshRequestResponseCounts(requestIds, session = null) {
+    const uniqueIds = [...new Set(requestIds.map((id) => id.toString()))];
+    for (const requestId of uniqueIds) {
+        const responseCount = await ShopResponse.countDocuments({ requestId }).session(session);
+        await CustomerRequest.findByIdAndUpdate(requestId, { responseCount }, { session });
+    }
+}
+
+async function deleteThreads(query, session = null) {
+    const threads = await ChatThread.find(query).select("_id").session(session);
     const threadIds = threads.map((thread) => thread._id);
     if (threadIds.length > 0) {
-        await Message.deleteMany({ threadId: { $in: threadIds } });
-        await ChatThread.deleteMany({ _id: { $in: threadIds } });
+        await Message.deleteMany({ threadId: { $in: threadIds } }, { session });
+        await ChatThread.deleteMany({ _id: { $in: threadIds } }, { session });
     }
 }
 
-async function deleteCustomerAccount(userId) {
-    const reviews = await ShopReview.find({ customerId: userId }).select("shopProfileId");
+async function deleteCustomerAccount(userId, session = null) {
+    const reviews = await ShopReview.find({ customerId: userId })
+        .select("shopProfileId")
+        .session(session);
     const affectedProfileIds = reviews.map((review) => review.shopProfileId);
-    const requests = await CustomerRequest.find({ customerId: userId }).select("_id");
+    const requests = await CustomerRequest.find({ customerId: userId })
+        .select("_id")
+        .session(session);
     const requestIds = requests.map((request) => request._id);
 
-    await deleteThreads({ customerId: userId });
+    await deleteThreads({ customerId: userId }, session);
     if (requestIds.length > 0) {
-        await ShopResponse.deleteMany({ requestId: { $in: requestIds } });
+        await ShopResponse.deleteMany({ requestId: { $in: requestIds } }, { session });
     }
-    await ShopReview.deleteMany({ customerId: userId });
-    await CustomerRequest.deleteMany({ customerId: userId });
-    await User.findByIdAndDelete(userId);
+    await ShopReview.deleteMany({ customerId: userId }, { session });
+    await CustomerRequest.deleteMany({ customerId: userId }, { session });
+    await User.findByIdAndDelete(userId, { session });
 
-    await Promise.all(
-        [...new Set(affectedProfileIds.map((id) => id.toString()))].map(
-            recalculateShopRating,
-        ),
-    );
+    // Recompute ratings for shops whose reviews were removed.
+    for (const profileId of [
+        ...new Set(affectedProfileIds.map((id) => id.toString())),
+    ]) {
+        await recalculateShopRating(profileId, session);
+    }
 }
 
-async function deleteShopAccount(userId) {
-    const profile = await ShopProfile.findOne({ userId });
-    const responses = await ShopResponse.find({ shopUserId: userId }).select("requestId");
+async function deleteShopAccount(userId, session = null) {
+    const profile = await ShopProfile.findOne({ userId }).session(session);
+    const responses = await ShopResponse.find({ shopUserId: userId })
+        .select("requestId")
+        .session(session);
     const affectedRequestIds = responses.map((response) => response.requestId);
 
-    await deleteThreads({ shopUserId: userId });
-    await ShopResponse.deleteMany({ shopUserId: userId });
-    await ShopReview.deleteMany({
-        $or: [
-            { shopUserId: userId },
-            ...(profile ? [{ shopProfileId: profile._id }] : []),
-        ],
-    });
-    await ShopProfile.deleteOne({ userId });
+    await deleteThreads({ shopUserId: userId }, session);
+    await ShopResponse.deleteMany({ shopUserId: userId }, { session });
+    await ShopReview.deleteMany(
+        {
+            $or: [
+                { shopUserId: userId },
+                ...(profile ? [{ shopProfileId: profile._id }] : []),
+            ],
+        },
+        { session },
+    );
+    await ShopProfile.deleteOne({ userId }, { session });
     await CustomerRequest.updateMany(
         { purchasedShopUserId: userId },
         { $set: { purchasedShopUserId: null } },
+        { session },
     );
-    await refreshRequestResponseCounts(affectedRequestIds);
-    await User.findByIdAndDelete(userId);
+    await refreshRequestResponseCounts(affectedRequestIds, session);
+    await User.findByIdAndDelete(userId, { session });
+}
+
+// Runs the full cascade atomically. Falls back to a non-transactional run on a
+// standalone mongod (no replica set), so deletion never hard-fails on env.
+async function runAccountDeletion(user) {
+    const session = await mongoose.startSession();
+    try {
+        await session.withTransaction(async () => {
+            if (user.type === "shop") {
+                await deleteShopAccount(user._id, session);
+            } else {
+                await deleteCustomerAccount(user._id, session);
+            }
+        });
+    } catch (e) {
+        if (/Transaction numbers are only allowed|replica set|Transactions are not supported/i.test(e.message)) {
+            if (user.type === "shop") {
+                await deleteShopAccount(user._id, null);
+            } else {
+                await deleteCustomerAccount(user._id, null);
+            }
+        } else {
+            throw e;
+        }
+    } finally {
+        await session.endSession();
+    }
 }
 
 //Sign up
@@ -437,9 +476,7 @@ authRouter.put("/api/account/settings", auth, async (req, res) => {
             promotions: notificationSettings.promotions === true,
         };
         user.preferences = {
-            categories: Array.isArray(preferences.categories)
-                ? preferences.categories
-                : [],
+            categories: normalizeCategories(preferences.categories),
             budgetMin:
                 preferences.budgetMin === null || preferences.budgetMin === ""
                     ? null
@@ -491,16 +528,16 @@ authRouter.delete("/api/account", auth, async (req, res) => {
             return res.status(400).json({ msg: "Invalid password." });
         }
 
-        if (user.type === "shop") {
-            await deleteShopAccount(user._id);
-        } else {
-            await deleteCustomerAccount(user._id);
-        }
+        await runAccountDeletion(user);
 
         return res.json({ msg: "Account deleted." });
     } catch (e) {
+        console.error("account deletion failed", e);
         return res.status(500).json({ err: e.message });
     }
 });
 
 module.exports = authRouter;
+module.exports.deleteCustomerAccount = deleteCustomerAccount;
+module.exports.deleteShopAccount = deleteShopAccount;
+module.exports.runAccountDeletion = runAccountDeletion;

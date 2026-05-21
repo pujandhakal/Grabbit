@@ -14,7 +14,9 @@ import 'package:grabbit/features/requests/domain/entities/request_summary.dart';
 import 'package:grabbit/features/requests/domain/entities/shop_response.dart';
 import 'package:grabbit/features/requests/presentation/controllers/request_providers.dart';
 
-class RequestResponsesScreen extends ConsumerWidget {
+enum _ResponseFilter { all, nearest }
+
+class RequestResponsesScreen extends ConsumerStatefulWidget {
   const RequestResponsesScreen({
     required this.requestId,
     super.key,
@@ -23,8 +25,17 @@ class RequestResponsesScreen extends ConsumerWidget {
   final String requestId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final responses = ref.watch(requestResponsesProvider(requestId));
+  ConsumerState<RequestResponsesScreen> createState() =>
+      _RequestResponsesScreenState();
+}
+
+class _RequestResponsesScreenState
+    extends ConsumerState<RequestResponsesScreen> {
+  var _filter = _ResponseFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
+    final responses = ref.watch(requestResponsesProvider(widget.requestId));
     final request = responses.valueOrNull?.request;
     final subtitle = responses.maybeWhen(
       data: (data) => '${data.responses.length} shops have responded',
@@ -57,34 +68,62 @@ class RequestResponsesScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
-          data: (data) => ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              _RequestSummaryCard(request: data.request),
-              const SizedBox(height: 16),
-              const Row(
-                children: [
-                  AppStatusChip(label: 'Nearest First'),
-                  SizedBox(width: 10),
-                  AppStatusChip(label: 'All Shops', tone: AppStatusTone.blue),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ...data.responses.map(
-                (response) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ShopResponseCard(
-                    response: response,
-                    requestId: requestId,
-                    requestStatus: data.request.status,
+          data: (data) {
+            final responses = _filteredResponses(data.responses);
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                _RequestSummaryCard(request: data.request),
+                const SizedBox(height: 16),
+                _ResponseFilters(
+                  selected: _filter,
+                  onChanged: (filter) => setState(() {
+                    _filter = filter;
+                  }),
+                ),
+                const SizedBox(height: 16),
+                ...responses.map(
+                  (response) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _ShopResponseCard(
+                      response: response,
+                      requestId: widget.requestId,
+                      requestStatus: data.request.status,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );
+  }
+
+  List<ShopResponse> _filteredResponses(List<ShopResponse> responses) {
+    if (_filter == _ResponseFilter.all) {
+      return responses;
+    }
+
+    final sorted = [...responses];
+    sorted.sort((a, b) {
+      return _distanceSortValue(a.distance)
+          .compareTo(_distanceSortValue(b.distance));
+    });
+    return sorted;
+  }
+
+  double _distanceSortValue(String distance) {
+    final normalized = distance.trim().toLowerCase();
+    if (normalized == 'nearby') return 0;
+
+    final match = RegExp(r'(\d+(?:\.\d+)?)\s*(km|m)').firstMatch(normalized);
+    if (match == null) return double.infinity;
+
+    final value = double.tryParse(match.group(1) ?? '');
+    if (value == null) return double.infinity;
+
+    return match.group(2) == 'km' ? value * 1000 : value;
   }
 
   Future<void> _deleteRequest(
@@ -130,6 +169,50 @@ class RequestResponsesScreen extends ConsumerWidget {
         SnackBar(content: Text(message)),
       );
     }
+  }
+}
+
+class _ResponseFilters extends StatelessWidget {
+  const _ResponseFilters({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final _ResponseFilter selected;
+  final ValueChanged<_ResponseFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: [
+        ChoiceChip(
+          label: const Text('All Shops'),
+          selected: selected == _ResponseFilter.all,
+          selectedColor: AppColors.primarySoft,
+          onSelected: (_) => onChanged(_ResponseFilter.all),
+          labelStyle: TextStyle(
+            color: selected == _ResponseFilter.all
+                ? AppColors.primaryDark
+                : AppColors.textMuted,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        ChoiceChip(
+          label: const Text('Nearest First'),
+          selected: selected == _ResponseFilter.nearest,
+          selectedColor: AppColors.primarySoft,
+          onSelected: (_) => onChanged(_ResponseFilter.nearest),
+          labelStyle: TextStyle(
+            color: selected == _ResponseFilter.nearest
+                ? AppColors.primaryDark
+                : AppColors.textMuted,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
   }
 }
 
