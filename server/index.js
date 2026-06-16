@@ -1,3 +1,4 @@
+require("dotenv").config();
 const cors = require("cors");
 const express = require("express");
 const http = require("http");
@@ -12,9 +13,8 @@ const chatRouter = require("./routes/chat");
 const ShopProfile = require("./models/shop_profile");
 const { categoriesWithAliases } = require("./utils/request_categories");
 
-const PORT = 3000;
-const DB =
-  "mongodb+srv://pujan:Grabbit2026@cluster0.jaokfcd.mongodb.net/?appName=Cluster0";
+const PORT = process.env.PORT || 3000;
+const DB = process.env.MONGODB_URI;
 const JWT_SECRET = process.env.JWT_SECRET || "grabbit-dev-secret";
 
 const app = express();
